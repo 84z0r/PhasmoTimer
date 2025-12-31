@@ -1,5 +1,5 @@
 # PhasmoTimer is a lightweight but powerful timer for Phasmophobia players.
-<img width="389" height="203" alt="timer_git" src="https://github.com/user-attachments/assets/5b3672c2-fe75-4d00-8f79-51d074fce8b3" />
+<img width="389" height="203" alt="timer_git" src="https://github.com/user-attachments/assets/a33d463b-b17c-4f86-b1b8-6f04caa6d9fb" />
 
 - Doesn't read the game memory
 - Works as an external overlay
