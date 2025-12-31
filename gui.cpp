@@ -350,7 +350,7 @@ void CGui::UpdaterWindow()
             ImGui::SetCursorPosX((contentWidth - textWidthDownload) * 0.5f);
             ImGui::Text("%s", textDownload);
             ImGui::SameLine();
-            if (ImGui::Link("GitHub", L"https://github.com/84z0r"))
+            if (ImGui::Link("GitHub", L"https://github.com/84z0r/PhasmoTimer/releases"))
             {
                 ImGui::CloseCurrentPopup();
                 bShowUpdate = false;
