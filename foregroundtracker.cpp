@@ -1,4 +1,5 @@
 #include "foregroundtracker.h"
+#include "tools.h"
 
 bool CGameForegroundTracker::IsGameActive(bool& bSelfActive)
 {
@@ -29,9 +30,9 @@ bool CGameForegroundTracker::IsGameActive(bool& bSelfActive)
     return fgPid == this->m_gamePid;
 }
 
-void CGameForegroundTracker::SetProcessName(const wchar_t* exeName)
+void CGameForegroundTracker::SetProcessName(const std::string& exeName)
 {
-    this->m_exeName = exeName;
+    this->m_exeName = CTools::Get().Utf8ToWString(exeName.c_str());
     this->m_gamePid = 0;
     this->m_lastCheckedPid = 0;
 }
@@ -43,7 +44,7 @@ void CGameForegroundTracker::SetOwnHwnd(HWND hwnd)
 
 bool CGameForegroundTracker::IsCorrectGameProcess(DWORD pid)
 {
-    if (!m_exeName)
+    if (this->m_exeName.empty())
         return false;
 
     HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
@@ -62,5 +63,5 @@ bool CGameForegroundTracker::IsCorrectGameProcess(DWORD pid)
     const wchar_t* filename = wcsrchr(path, L'\\');
     filename = filename ? filename + 1 : path;
 
-    return _wcsicmp(filename, m_exeName) == 0;
+    return _wcsicmp(filename, this->m_exeName.c_str()) == 0;
 }

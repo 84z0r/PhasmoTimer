@@ -113,11 +113,8 @@ bool CConfig::Load()
     LoadImVec4("imvHuntTimerColor1", this->imvHuntTimerColor1);
     LoadImVec4("imvHuntTimerColor2", this->imvHuntTimerColor2);
 
-    if (doc.HasMember("wstrGameProcessName") && doc["wstrGameProcessName"].IsString())
-    {
-        const char* exeNameUtf8 = doc["wstrGameProcessName"].GetString();
-        this->wstrGameProcessName = CTools::Get().Utf8ToWString(exeNameUtf8);
-    }
+    if (doc.HasMember("strGameProcessName") && doc["strGameProcessName"].IsString())
+        this->strGameProcessName = doc["strGameProcessName"].GetString();
 
     return true;
 }
@@ -189,10 +186,9 @@ bool CConfig::Save()
     SaveImVec4("imvHuntTimerColor1", this->imvHuntTimerColor1);
     SaveImVec4("imvHuntTimerColor2", this->imvHuntTimerColor2);
 
-    std::string exeUtf8 = CTools::Get().WStringToUtf8(this->wstrGameProcessName);
     rapidjson::Value exeValue;
-    exeValue.SetString(exeUtf8.c_str(), static_cast<rapidjson::SizeType>(exeUtf8.length()), alloc);
-    doc.AddMember("wstrGameProcessName", exeValue, alloc);
+    exeValue.SetString(this->strGameProcessName.c_str(), static_cast<rapidjson::SizeType>(this->strGameProcessName.length()), alloc);
+    doc.AddMember("strGameProcessName", exeValue, alloc);
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);

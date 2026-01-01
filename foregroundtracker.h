@@ -10,15 +10,15 @@ class CGameForegroundTracker : public Singleton<CGameForegroundTracker>
 public:
     bool IsGameActive(bool& bSelfActive);
     void SetOwnHwnd(HWND hwnd);
-    void SetProcessName(const wchar_t* exeName);
+    void SetProcessName(const std::string& exeName);
 
 private:
-    CGameForegroundTracker() : m_gamePid(0), m_lastCheckedPid(0), m_ownHwnd(nullptr), m_exeName(nullptr) {}
+    CGameForegroundTracker() : m_gamePid(0), m_lastCheckedPid(0), m_ownHwnd(nullptr), m_exeName{} {}
 
     DWORD m_gamePid;
     DWORD m_lastCheckedPid;
     HWND m_ownHwnd;
-    const wchar_t* m_exeName;
+    std::wstring m_exeName;
 
     bool IsCorrectGameProcess(DWORD pid);
 };

@@ -157,7 +157,9 @@ void CGui::SettingsWindow()
                 if (CConfig::Get().bCheckActiveWindow)
                 {
                     ImGui::PushItemWidth(215.f * Style.FontScaleDpi);
-                    ImGui::InputText("Process Name", CConfig::Get().wstrGameProcessName);
+                    if (ImGui::InputText("Process Name", CConfig::Get().strGameProcessName))
+                        CGameForegroundTracker::Get().SetProcessName(CConfig::Get().strGameProcessName);
+
                     ImGui::SliderFloat("Inactive Alpha", &CConfig::Get().flInactiveAlpha, 0.f, 1.f);
                     ImGui::PopItemWidth();
                 }
@@ -275,7 +277,7 @@ void CGui::AboutWindow()
             ImGui::Columns(1);
             ImGui::Text("Links: ");
             ImGui::SameLine();
-            if (ImGui::Link("GitHub", L"https://github.com/84z0r")) { ImGui::CloseCurrentPopup(); this->bShowAbout = false; }
+            if (ImGui::Link("GitHub", L"https://github.com/84z0r/PhasmoTimer")) { ImGui::CloseCurrentPopup(); this->bShowAbout = false; }
             ImGui::SameLine();
             if (ImGui::Link("Twitch", L"https://twitch.tv/atlas2884")) { ImGui::CloseCurrentPopup(); this->bShowAbout = false; }
             ImGui::SameLine();
@@ -702,7 +704,7 @@ bool CGui::Init(HINSTANCE hInstance)
         MessageBox(nullptr, L"Failed to load logo texture", L"Error", MB_OK | MB_ICONERROR);
 
     CGameForegroundTracker::Get().SetOwnHwnd(this->hwnd);
-    CGameForegroundTracker::Get().SetProcessName(CConfig::Get().wstrGameProcessName.c_str());
+    CGameForegroundTracker::Get().SetProcessName(CConfig::Get().strGameProcessName);
 
     return true;
 }

@@ -51,5 +51,5 @@ public:
 	ImVec4 imvHuntTimerColor1 = ImVec4(1.00f, 1.00f, 0.70f, 1.0f);
 	ImVec4 imvHuntTimerColor2 = ImVec4(0.85f, 0.70f, 0.10f, 1.0f);
 
-	std::wstring wstrGameProcessName = L"Phasmophobia.exe";
+	std::string strGameProcessName = "Phasmophobia.exe";
 };
