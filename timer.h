@@ -44,3 +44,11 @@ public:
 private:
 	void UpdateColors();
 };
+
+class CCandleTimer : public CTimer
+{
+public:
+	void Update(const std::chrono::steady_clock::time_point& now);
+private:
+	void UpdateColors();
+};

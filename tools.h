@@ -2,8 +2,6 @@
 #include "singleton.h"
 #include "imgui.h"
 #include <string>
-#include <array>
-#include <cstddef>
 
 class CTools : public Singleton<CTools>
 {
@@ -13,4 +11,5 @@ public:
 	ImVec4 Lerp(const ImVec4& a, const ImVec4& b, float t);
 	const char* GetKeyNameVK(int vk);
 	bool parseULL(const std::string& s, unsigned long long& value);
+	bool IsTaskbarAutoHideEnabled();
 };

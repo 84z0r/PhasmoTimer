@@ -1,6 +1,9 @@
 #include "tools.h"
 #include <windows.h>
+#include <shellapi.h>
 #include <charconv>
+#include <array>
+#include <cstddef>
 
 std::wstring CTools::Utf8ToWString(const char* utf8Str)
 {
@@ -78,4 +81,14 @@ bool CTools::parseULL(const std::string& s, unsigned long long& value)
         ++ptr;
 
     return ptr == s.data() + s.size();
+}
+
+bool CTools::IsTaskbarAutoHideEnabled()
+{
+    APPBARDATA abd = {};
+    abd.cbSize = sizeof(abd);
+
+    UINT_PTR state = SHAppBarMessage(ABM_GETSTATE, &abd);
+
+    return (state & ABS_AUTOHIDE) != 0;
 }

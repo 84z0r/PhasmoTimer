@@ -53,10 +53,15 @@ bool CConfig::Load()
 
     if (doc.HasMember("bCheckActiveWindow") && doc["bCheckActiveWindow"].IsBool()) this->bCheckActiveWindow = doc["bCheckActiveWindow"].GetBool();
     if (doc.HasMember("bCheckUpdates") && doc["bCheckUpdates"].IsBool()) this->bCheckUpdates = doc["bCheckUpdates"].GetBool();
+    if (doc.HasMember("bEnableSplitMode") && doc["bEnableSplitMode"].IsBool()) this->bEnableSplitMode = doc["bEnableSplitMode"].GetBool();
+    if (doc.HasMember("bEnableSplitObambo") && doc["bEnableSplitObambo"].IsBool()) this->bEnableSplitObambo = doc["bEnableSplitObambo"].GetBool();
+    if (doc.HasMember("bEnableSplitHunt") && doc["bEnableSplitHunt"].IsBool()) this->bEnableSplitHunt = doc["bEnableSplitHunt"].GetBool();
+    if (doc.HasMember("bEnableSplitCandle") && doc["bEnableSplitCandle"].IsBool()) this->bEnableSplitCandle = doc["bEnableSplitCandle"].GetBool();
 
     if (doc.HasMember("vkSmudgeTimerBind") && doc["vkSmudgeTimerBind"].IsInt()) this->vkSmudgeTimerBind = doc["vkSmudgeTimerBind"].GetInt();
     if (doc.HasMember("vkSwitchSmudgeTimerModeBind") && doc["vkSwitchSmudgeTimerModeBind"].IsInt()) this->vkSwitchSmudgeTimerModeBind = doc["vkSwitchSmudgeTimerModeBind"].GetInt();
     if (doc.HasMember("vkHuntTimerBind") && doc["vkHuntTimerBind"].IsInt()) this->vkHuntTimerBind = doc["vkHuntTimerBind"].GetInt();
+    if (doc.HasMember("vkCandleTimerBind") && doc["vkCandleTimerBind"].IsInt()) this->vkCandleTimerBind = doc["vkCandleTimerBind"].GetInt();
     if (doc.HasMember("vkFullResetBind") && doc["vkFullResetBind"].IsInt()) this->vkFullResetBind = doc["vkFullResetBind"].GetInt();
     if (doc.HasMember("vkResetBind") && doc["vkResetBind"].IsInt()) this->vkResetBind = doc["vkResetBind"].GetInt();
     if (doc.HasMember("vkTouchBind") && doc["vkTouchBind"].IsInt()) this->vkTouchBind = doc["vkTouchBind"].GetInt();
@@ -68,6 +73,10 @@ bool CConfig::Load()
     if (doc.HasMember("iMaxMsHunt") && doc["iMaxMsHunt"].IsInt64()) this->iMaxMsHunt = doc["iMaxMsHunt"].GetInt64();
 
     if (doc.HasMember("flSize") && doc["flSize"].IsFloat()) this->flSize = doc["flSize"].GetFloat();
+    if (doc.HasMember("flSmudgeTimerSize") && doc["flSmudgeTimerSize"].IsFloat()) this->flSmudgeTimerSize = doc["flSmudgeTimerSize"].GetFloat();
+    if (doc.HasMember("flObamboTimerSize") && doc["flObamboTimerSize"].IsFloat()) this->flObamboTimerSize = doc["flObamboTimerSize"].GetFloat();
+    if (doc.HasMember("flHuntTimerSize") && doc["flHuntTimerSize"].IsFloat()) this->flHuntTimerSize = doc["flHuntTimerSize"].GetFloat();
+    if (doc.HasMember("flCandleTimerSize") && doc["flCandleTimerSize"].IsFloat()) this->flCandleTimerSize = doc["flCandleTimerSize"].GetFloat();
     if (doc.HasMember("flRounding") && doc["flRounding"].IsFloat()) this->flRounding = doc["flRounding"].GetFloat();
     if (doc.HasMember("flInactiveAlpha") && doc["flInactiveAlpha"].IsFloat()) this->flInactiveAlpha = doc["flInactiveAlpha"].GetFloat();
 
@@ -81,6 +90,10 @@ bool CConfig::Load()
         };
 
     LoadImVec2("imvTimerWindowPos", this->imvTimerWindowPos);
+    LoadImVec2("imvSmudgeTimerWindowPos", this->imvSmudgeTimerWindowPos);
+    LoadImVec2("imvObamboTimerWindowPos", this->imvObamboTimerWindowPos);
+    LoadImVec2("imvHuntTimerWindowPos", this->imvHuntTimerWindowPos);
+    LoadImVec2("imvCandleTimerWindowPos", this->imvCandleTimerWindowPos);
 
     auto LoadImVec4 = [&](const char* name, ImVec4& value)
         {
@@ -113,8 +126,13 @@ bool CConfig::Load()
     LoadImVec4("imvHuntTimerColor1", this->imvHuntTimerColor1);
     LoadImVec4("imvHuntTimerColor2", this->imvHuntTimerColor2);
 
+    LoadImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
+    LoadImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
+
     if (doc.HasMember("strGameProcessName") && doc["strGameProcessName"].IsString())
         this->strGameProcessName = doc["strGameProcessName"].GetString();
+
+    this->bConfigUpdated = true;
 
     return true;
 }
@@ -128,10 +146,15 @@ bool CConfig::Save()
 
     doc.AddMember("bCheckActiveWindow", this->bCheckActiveWindow, alloc);
     doc.AddMember("bCheckUpdates", this->bCheckUpdates, alloc);
+    doc.AddMember("bEnableSplitMode", this->bEnableSplitMode, alloc);
+    doc.AddMember("bEnableSplitObambo", this->bEnableSplitObambo, alloc);
+    doc.AddMember("bEnableSplitHunt", this->bEnableSplitHunt, alloc);
+    doc.AddMember("bEnableSplitCandle", this->bEnableSplitCandle, alloc);
 
     doc.AddMember("vkSmudgeTimerBind", this->vkSmudgeTimerBind, alloc);
     doc.AddMember("vkSwitchSmudgeTimerModeBind", this->vkSwitchSmudgeTimerModeBind, alloc);
     doc.AddMember("vkHuntTimerBind", this->vkHuntTimerBind, alloc);
+    doc.AddMember("vkCandleTimerBind", this->vkCandleTimerBind, alloc);
     doc.AddMember("vkFullResetBind", this->vkFullResetBind, alloc);
     doc.AddMember("vkResetBind", this->vkResetBind, alloc);
     doc.AddMember("vkTouchBind", this->vkTouchBind, alloc);
@@ -143,6 +166,10 @@ bool CConfig::Save()
     doc.AddMember("iMaxMsHunt", this->iMaxMsHunt, alloc);
 
     doc.AddMember("flSize", this->flSize, alloc);
+    doc.AddMember("flSmudgeTimerSize", this->flSmudgeTimerSize, alloc);
+    doc.AddMember("flObamboTimerSize", this->flObamboTimerSize, alloc);
+    doc.AddMember("flHuntTimerSize", this->flHuntTimerSize, alloc);
+    doc.AddMember("flCandleTimerSize", this->flCandleTimerSize, alloc);
     doc.AddMember("flRounding", this->flRounding, alloc);
     doc.AddMember("flInactiveAlpha", this->flInactiveAlpha, alloc);
 
@@ -155,6 +182,10 @@ bool CConfig::Save()
         };
 
     SaveImVec2("imvTimerWindowPos", this->imvTimerWindowPos);
+    SaveImVec2("imvSmudgeTimerWindowPos", this->imvSmudgeTimerWindowPos);
+    SaveImVec2("imvObamboTimerWindowPos", this->imvObamboTimerWindowPos);
+    SaveImVec2("imvHuntTimerWindowPos", this->imvHuntTimerWindowPos);
+    SaveImVec2("imvCandleTimerWindowPos", this->imvCandleTimerWindowPos);
 
     auto SaveImVec4 = [&](const char* name, const ImVec4& value)
         {
@@ -186,6 +217,9 @@ bool CConfig::Save()
     SaveImVec4("imvHuntTimerColor1", this->imvHuntTimerColor1);
     SaveImVec4("imvHuntTimerColor2", this->imvHuntTimerColor2);
 
+    SaveImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
+    SaveImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
+
     rapidjson::Value exeValue;
     exeValue.SetString(this->strGameProcessName.c_str(), static_cast<rapidjson::SizeType>(this->strGameProcessName.length()), alloc);
     doc.AddMember("strGameProcessName", exeValue, alloc);
@@ -212,4 +246,9 @@ bool CConfig::Save()
     }
 
     return true;
+}
+
+void CConfig::OnFrameEnd()
+{
+    this->bConfigUpdated = false;
 }

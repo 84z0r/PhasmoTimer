@@ -13,8 +13,14 @@ namespace Timer
 
     namespace Obambo
     {
-        constexpr const int64_t MAX_MS_OBAMBO = 2 * 60 * 1000;
-        constexpr const int64_t START_MS_OBAMBO = 60 * 1000;
+        constexpr const int64_t MAX_MS = 2 * 60 * 1000;
+        constexpr const int64_t START_MS = 60 * 1000;
+    }
+
+    namespace Candle
+    {
+        constexpr const int64_t MAX_MS = 30 * 1000;
+        constexpr const int64_t START_MS = 30 * 1000;
     }
 
     constexpr const int64_t MAX_MS = 600000;
@@ -98,14 +104,14 @@ void CObamboTimer::Set(const std::chrono::steady_clock::time_point& start_time)
 
 void CObamboTimer::Update(const std::chrono::steady_clock::time_point& now)
 {
-    this->start_from_ms = Timer::Obambo::START_MS_OBAMBO;
+    this->start_from_ms = Timer::Obambo::START_MS;
     int64_t shifted = std::chrono::duration_cast<std::chrono::milliseconds>(now - this->start_time).count() + this->start_from_ms;
     int64_t currentCycle = 0i64;
 
     if (this->bRunning)
     {
-        currentCycle = shifted / Timer::Obambo::MAX_MS_OBAMBO;
-        this->value_ms = Timer::Obambo::MAX_MS_OBAMBO - (shifted % Timer::Obambo::MAX_MS_OBAMBO);
+        currentCycle = shifted / Timer::Obambo::MAX_MS;
+        this->value_ms = Timer::Obambo::MAX_MS - (shifted % Timer::Obambo::MAX_MS);
     }
     else this->value_ms = this->start_from_ms;
 
@@ -148,4 +154,31 @@ void CHuntTimer::UpdateColors()
 {
     this->color[0] = CConfig::Get().imvHuntTimerColor1;
     this->color[1] = CConfig::Get().imvHuntTimerColor2;
+}
+
+void CCandleTimer::Update(const std::chrono::steady_clock::time_point& now)
+{
+    this->start_from_ms = Timer::Candle::START_MS;
+    int64_t shifted = std::chrono::duration_cast<std::chrono::milliseconds>(now - this->start_time).count() + this->start_from_ms;
+
+    if (this->bRunning)
+    {
+        if ((shifted / Timer::Candle::MAX_MS) == 1i64)
+            this->value_ms = Timer::Candle::MAX_MS - (shifted % Timer::Candle::MAX_MS);
+        else
+        {
+            this->bRunning = false;
+            this->value_ms = this->start_from_ms;
+        }
+    }
+    else this->value_ms = this->start_from_ms;
+
+    this->UpdateString();
+    this->UpdateColors();
+}
+
+void CCandleTimer::UpdateColors()
+{
+    this->color[0] = CConfig::Get().imvCandleTimerColor1;
+    this->color[1] = CConfig::Get().imvCandleTimerColor2;
 }
