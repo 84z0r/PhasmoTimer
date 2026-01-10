@@ -42,7 +42,7 @@
     <ClCompile Include="imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="gui.cpp">
+    <ClCompile Include="render.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="timer.cpp">
@@ -64,6 +64,9 @@
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="updater.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="gui.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,7 +119,7 @@
     <ClInclude Include="imgui_wrappers.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="gui.h">
+    <ClInclude Include="render.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="foregroundtracker.h">
@@ -126,6 +129,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="gui.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

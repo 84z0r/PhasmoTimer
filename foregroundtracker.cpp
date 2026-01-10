@@ -1,33 +1,47 @@
 #include "foregroundtracker.h"
 #include "tools.h"
 
-bool CGameForegroundTracker::IsGameActive(bool& bSelfActive)
+bool CGameForegroundTracker::IsGameActive(bool& bSelfActive, const std::chrono::steady_clock::time_point& now)
 {
+    if ((now - this->t_lastCheck) < this->cache_time)
+    {
+        bSelfActive = this->bLastSelfActive;
+        return this->bLastRet;
+    }
+
+    this->t_lastCheck = now;
+
     HWND fg = GetForegroundWindow();
     if (!fg)
+        return bSelfActive = this->bLastRet = false;
+
+    if (fg == this->m_lastCheckedHwnd)
     {
-        bSelfActive = false;
-        return false;
+        bSelfActive = this->bLastSelfActive;
+        return this->bLastRet;
     }
-        
-    bSelfActive = (fg == this->m_ownHwnd);
+
+    this->m_lastCheckedHwnd = fg;
+    this->bLastSelfActive = bSelfActive = (fg == this->m_ownHwnd);
+
+    if (bSelfActive)
+        return this->bLastRet = false;
 
     DWORD fgPid = 0;
     GetWindowThreadProcessId(fg, &fgPid);
 
-    if (fgPid)
-    {
-        if (fgPid == this->m_gamePid) return true;
-        else if (fgPid != this->m_lastCheckedPid)
-        {
-            if (this->IsCorrectGameProcess(fgPid))
-                this->m_gamePid = fgPid;
+    if (!fgPid)
+        return this->bLastRet = false;
 
-            this->m_lastCheckedPid = fgPid;
-        }
+    if (fgPid != this->m_gamePid && fgPid != this->m_lastCheckedPid)
+    {
+        if (this->IsCorrectGameProcess(fgPid))
+            this->m_gamePid = fgPid;
+
+        this->m_lastCheckedPid = fgPid;
     }
 
-    return fgPid == this->m_gamePid;
+    return this->bLastRet = (fgPid == this->m_gamePid);
 }
 
 void CGameForegroundTracker::SetProcessName(const std::string& exeName)

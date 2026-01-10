@@ -1,4 +1,4 @@
-﻿#include "gui.h"
+﻿#include "render.h"
 #include "config.h"
 #include "updater.h"
 #include <thread>
@@ -7,7 +7,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 {
     CConfig::Get().Load();
 
-    if (!CGui::Get().Init(hInstance))
+    if (!CRender::Get().Init(hInstance))
         return 1;
 
     std::thread inputThread([]()->void { CInput::Get().InputThread(); });
@@ -18,10 +18,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         updaterThread.detach();
     }
 
-    CGui::Get().RenderLoop();
+    CRender::Get().RenderLoop();
     CInput::Get().StopInputThread();
 
     inputThread.join();
-    CGui::Get().Cleanup();
+    CRender::Get().Cleanup();
     return 0;
 }
