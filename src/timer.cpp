@@ -64,7 +64,7 @@ void CSmudgeTimer::Update(const std::chrono::steady_clock::time_point& now, cons
     this->start_from_ms = start_from_ms;
     this->value_ms = this->bRunning ? (std::chrono::duration_cast<std::chrono::milliseconds>(now - this->start_time).count() + this->start_from_ms) : this->start_from_ms;
 
-    if (this->value_ms >= std::clamp(CConfig::Get().iMaxMsSmudge, 1000i64, Timer::MAX_MS))
+    if (this->value_ms >= std::clamp(CConfig::Get().iMaxMsSmudge, 1000LL, Timer::MAX_MS))
     {
         this->bRunning = false;
         this->value_ms = this->start_from_ms;
@@ -106,7 +106,7 @@ void CObamboTimer::Update(const std::chrono::steady_clock::time_point& now)
 {
     this->start_from_ms = Timer::Obambo::START_MS;
     int64_t shifted = std::chrono::duration_cast<std::chrono::milliseconds>(now - this->start_time).count() + this->start_from_ms;
-    int64_t currentCycle = 0i64;
+    int64_t currentCycle = 0LL;
 
     if (this->bRunning)
     {
@@ -140,7 +140,7 @@ void CHuntTimer::Update(const std::chrono::steady_clock::time_point& now, const 
     this->start_from_ms = start_from_ms;
     this->value_ms = this->bRunning ? (std::chrono::duration_cast<std::chrono::milliseconds>(now - this->start_time).count() + this->start_from_ms) : this->start_from_ms;
 
-    if (this->value_ms >= std::clamp(CConfig::Get().iMaxMsHunt, 1000i64, Timer::MAX_MS))
+    if (this->value_ms >= std::clamp(CConfig::Get().iMaxMsHunt, 1000LL, Timer::MAX_MS))
     {
         this->bRunning = false;
         this->value_ms = this->start_from_ms;
@@ -163,7 +163,7 @@ void CCandleTimer::Update(const std::chrono::steady_clock::time_point& now)
 
     if (this->bRunning)
     {
-        if ((shifted / Timer::Candle::MAX_MS) == 1i64)
+        if ((shifted / Timer::Candle::MAX_MS) == 1LL)
             this->value_ms = Timer::Candle::MAX_MS - (shifted % Timer::Candle::MAX_MS);
         else
         {

@@ -4,6 +4,7 @@
 #include <charconv>
 #include <array>
 #include <cstddef>
+#include <algorithm>
 
 std::wstring CTools::Utf8ToWString(const char* utf8Str)
 {
@@ -29,6 +30,22 @@ std::string CTools::WStringToUtf8(const std::wstring& wstr)
     WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), &str[0], size_needed, nullptr, nullptr);
 
     return str;
+}
+
+std::wstring CTools::ToLower(std::wstring str)
+{
+    std::transform(str.begin(), str.end(), str.begin(), [](wchar_t c) { return std::tolower(c); });
+    return str;
+}
+
+std::string CTools::GeneratePlaceholderString(std::string inputText, char placeholderChar)
+{
+    for (char& c : inputText)
+    {
+        if (isdigit(c))
+            c = placeholderChar;
+    }
+    return inputText;
 }
 
 ImVec4 CTools::Lerp(const ImVec4& a, const ImVec4& b, float t)

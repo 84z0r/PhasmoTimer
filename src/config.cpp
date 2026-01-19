@@ -3,14 +3,25 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include "tools.h"
+#include "render.h"
 #include <vector>
 
-constexpr const char* config_filename = "config.json";
+CConfig::CConfig()
+{
+    wchar_t exe_path_buf[MAX_PATH];
+    if (GetModuleFileNameW(nullptr, exe_path_buf, MAX_PATH))
+        this->configFilePath = std::filesystem::path(exe_path_buf).parent_path();
+
+    if (this->configFilePath.empty())
+        this->configFilePath = std::filesystem::current_path();
+
+    this->configFilePath /= "config.json";
+}
 
 bool CConfig::Load()
 {
     FILE* file = nullptr;
-    errno_t err = fopen_s(&file, config_filename, "rb");
+    errno_t err = _wfopen_s(&file, this->configFilePath.c_str(), L"rb");
     if (err != 0 || !file)
     {
         MessageBox(nullptr, L"Failed to open config file", L"Failed to load config!", MB_OK | MB_ICONERROR);
@@ -57,6 +68,9 @@ bool CConfig::Load()
     if (doc.HasMember("bEnableSplitObambo") && doc["bEnableSplitObambo"].IsBool()) this->bEnableSplitObambo = doc["bEnableSplitObambo"].GetBool();
     if (doc.HasMember("bEnableSplitHunt") && doc["bEnableSplitHunt"].IsBool()) this->bEnableSplitHunt = doc["bEnableSplitHunt"].GetBool();
     if (doc.HasMember("bEnableSplitCandle") && doc["bEnableSplitCandle"].IsBool()) this->bEnableSplitCandle = doc["bEnableSplitCandle"].GetBool();
+    if (doc.HasMember("bScanSystemFonts") && doc["bScanSystemFonts"].IsBool()) this->bScanSystemFonts = doc["bScanSystemFonts"].GetBool();
+    if (doc.HasMember("bScanUserFonts") && doc["bScanUserFonts"].IsBool()) this->bScanUserFonts = doc["bScanUserFonts"].GetBool();
+    if (doc.HasMember("bScanAppFonts") && doc["bScanAppFonts"].IsBool()) this->bScanAppFonts = doc["bScanAppFonts"].GetBool();
 
     if (doc.HasMember("vkSmudgeTimerBind") && doc["vkSmudgeTimerBind"].IsInt()) this->vkSmudgeTimerBind = doc["vkSmudgeTimerBind"].GetInt();
     if (doc.HasMember("vkSwitchSmudgeTimerModeBind") && doc["vkSwitchSmudgeTimerModeBind"].IsInt()) this->vkSwitchSmudgeTimerModeBind = doc["vkSwitchSmudgeTimerModeBind"].GetInt();
@@ -132,8 +146,13 @@ bool CConfig::Load()
     if (doc.HasMember("strGameProcessName") && doc["strGameProcessName"].IsString())
         this->strGameProcessName = doc["strGameProcessName"].GetString();
 
-    this->bConfigUpdated = true;
+    if (doc.HasMember("fontFileName") && doc["fontFileName"].IsString())
+        this->fontFileName = doc["fontFileName"].GetString();
 
+    if (bInitialized)
+        this->bConfigUpdated = true;
+
+	this->bInitialized = true;
     return true;
 }
 
@@ -150,6 +169,9 @@ bool CConfig::Save()
     doc.AddMember("bEnableSplitObambo", this->bEnableSplitObambo, alloc);
     doc.AddMember("bEnableSplitHunt", this->bEnableSplitHunt, alloc);
     doc.AddMember("bEnableSplitCandle", this->bEnableSplitCandle, alloc);
+    doc.AddMember("bScanSystemFonts", this->bScanSystemFonts, alloc);
+    doc.AddMember("bScanUserFonts", this->bScanUserFonts, alloc);
+    doc.AddMember("bScanAppFonts", this->bScanAppFonts, alloc);
 
     doc.AddMember("vkSmudgeTimerBind", this->vkSmudgeTimerBind, alloc);
     doc.AddMember("vkSwitchSmudgeTimerModeBind", this->vkSwitchSmudgeTimerModeBind, alloc);
@@ -220,22 +242,26 @@ bool CConfig::Save()
     SaveImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
     SaveImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
 
-    rapidjson::Value exeValue;
-    exeValue.SetString(this->strGameProcessName.c_str(), static_cast<rapidjson::SizeType>(this->strGameProcessName.length()), alloc);
-    doc.AddMember("strGameProcessName", exeValue, alloc);
+    rapidjson::Value Value;
+    Value.SetString(this->strGameProcessName.c_str(), static_cast<rapidjson::SizeType>(this->strGameProcessName.length()), alloc);
+    doc.AddMember("strGameProcessName", Value, alloc);
+
+    std::u8string strFontFileName = this->fontFileName.u8string();
+    Value.SetString(reinterpret_cast<const char*>(strFontFileName.c_str()), static_cast<rapidjson::SizeType>(strFontFileName.length()), alloc);
+    doc.AddMember("fontFileName", Value, alloc);
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
 
-    FILE* file = nullptr;
-    errno_t err = fopen_s(&file, config_filename, "wb");
+    FILE* file = nullptr; 
+    errno_t err = _wfopen_s(&file, this->configFilePath.c_str(), L"wb");
     if (err != 0 || !file)
     {
         MessageBox(nullptr, L"Failed to open file for writing", L"Failed to write config", MB_OK | MB_ICONERROR);
         return false;
     }
-
+    
     size_t written = fwrite(buffer.GetString(), 1, buffer.GetSize(), file);
     fclose(file);
 

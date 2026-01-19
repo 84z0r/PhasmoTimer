@@ -1,16 +1,18 @@
 #pragma once
 #include "singleton.h"
 #include "input.h"
-#include "imgui.h"
+#include <imgui/imgui.h>
+#include <filesystem>
 
 class CConfig : public Singleton<CConfig>
 {
 public:
+	CConfig();
 	bool Load();
 	bool Save();
 	void OnFrameEnd();
 
-	bool bConfigUpdated = false;
+	inline bool IsConfigUpdated() { return this->bConfigUpdated; }
 
 	bool bCheckActiveWindow = true;
 	bool bCheckUpdates = true;
@@ -18,6 +20,9 @@ public:
 	bool bEnableSplitObambo = false;
 	bool bEnableSplitHunt = false;
 	bool bEnableSplitCandle = false;
+	bool bScanSystemFonts = true;
+	bool bScanUserFonts = true;
+	bool bScanAppFonts = true;
 
 	int vkSmudgeTimerBind = 0x52;
 	int vkSwitchSmudgeTimerModeBind = 0x32;
@@ -28,10 +33,10 @@ public:
 	int vkTouchBind = VK_LBUTTON;
 	int vkUseBind = VK_RBUTTON;
 
-	int64_t iStartSmudgeTimerAt = 1000i64;
-	int64_t iStartHuntTimerAt = 1000i64;
-	int64_t iMaxMsSmudge = 180000i64;
-	int64_t iMaxMsHunt = 215000i64;
+	int64_t iStartSmudgeTimerAt = 1000LL;
+	int64_t iStartHuntTimerAt = 1000LL;
+	int64_t iMaxMsSmudge = 180000LL;
+	int64_t iMaxMsHunt = 215000LL;
 
 	float flSize = 80.f;
 	float flSmudgeTimerSize = 56.f;
@@ -71,4 +76,11 @@ public:
 	ImVec4 imvCandleTimerColor2 = ImVec4(0.10f, 0.55f, 0.50f, 1.0f);
 
 	std::string strGameProcessName = "Phasmophobia.exe";
+
+	std::filesystem::path fontFileName = "Default";
+
+private:
+	std::filesystem::path configFilePath;
+	bool bInitialized = false;
+	bool bConfigUpdated = false;
 };

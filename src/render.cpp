@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "render.h"
 #include "config.h"
 #include "foregroundtracker.h"
@@ -5,8 +6,9 @@
 #include "imgui_wrappers.h"
 #include "font_comicz.h"
 #include "logo.h"
-#include "resource.h"
+#include "../resource.h"
 #include "gui.h"
+#include "fonts.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.hpp"
 
@@ -50,6 +52,8 @@ bool CRender::StartNewFrame()
         this->OnWindowMovedOrResized();
     }
 
+	CFonts::Get().OnFrameStart();
+
     this->now_time = std::chrono::steady_clock::now();
     this->bGameWindowActive = CConfig::Get().bCheckActiveWindow ? CGameForegroundTracker::Get().IsGameActive(this->bSelfWindowActive, this->now_time) : true;
 
@@ -79,6 +83,7 @@ void CRender::EndNewFrame()
 
     this->UpdateClickThroughState();
     CInput::Get().OnFrameEnd();
+	CFonts::Get().OnFrameEnd();
     CConfig::Get().OnFrameEnd();
 
     ImGui::Render();
@@ -160,12 +165,19 @@ bool CRender::Init(HINSTANCE hInstance)
     ImGui_ImplWin32_Init(this->hwnd);
     ImGui_ImplDX11_Init(this->g_pd3dDevice, this->g_pd3dDeviceContext);
 
-    io.Fonts->AddFontFromMemoryCompressedTTF(Font::FONT_COMICZ_BIN, sizeof(Font::FONT_COMICZ_BIN), 16.0f);
-    io.Fonts->AddFontFromMemoryCompressedTTF(Font::FONT_COMICZ_BIN, sizeof(Font::FONT_COMICZ_BIN), 96.0f);
-    io.Fonts->Build();
+    if (!CFonts::Get().Init())
+    {
+        MessageBoxW(nullptr, L"Failed to initialize Fonts!", L"Error", MB_OK | MB_ICONERROR);
+		return false;
+    }
+
+	CGui::Get().Init();
 
     if (!this->LoadTextureFromMemory(Logo::LOGO_BIN, sizeof(Logo::LOGO_BIN), &this->logo_texture, &this->logo_width, &this->logo_height))
+    {
         MessageBoxW(nullptr, L"Failed to load logo texture", L"Error", MB_OK | MB_ICONERROR);
+        return false;
+    }
 
     CGameForegroundTracker::Get().SetOwnHwnd(this->hwnd);
     CGameForegroundTracker::Get().SetProcessName(CConfig::Get().strGameProcessName);
@@ -175,6 +187,7 @@ bool CRender::Init(HINSTANCE hInstance)
 
 void CRender::Cleanup()
 {
+	CGui::Get().Cleanup();
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();

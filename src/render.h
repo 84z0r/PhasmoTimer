@@ -1,8 +1,8 @@
 #pragma once
 #include "singleton.h"
 #include <windows.h>
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+#include <imgui/imgui_impl_win32.h>
+#include <imgui/imgui_impl_dx11.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <dcomp.h>
@@ -14,6 +14,7 @@ public:
 	bool Init(HINSTANCE hInstance);
 	void Cleanup();
 	void RenderLoop();
+
 	inline bool IsGameWindowActive() { return this->bGameWindowActive; }
 	inline bool IsSelfWindowActive() { return this->bSelfWindowActive; }
 	inline const std::chrono::steady_clock::time_point& GetNowTime() { return this->now_time; }

@@ -20,7 +20,7 @@ private:
     std::wstring m_exeName{};
 
     std::chrono::steady_clock::time_point t_lastCheck{};
-    const std::chrono::milliseconds cache_time{ 100i64 };
+    const std::chrono::milliseconds cache_time{ 100LL };
 
     bool bLastRet = false;
     bool bLastSelfActive = true;

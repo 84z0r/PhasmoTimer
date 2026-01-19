@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <vector>
+#include <cmath>
 
 #ifndef IM_PI
 #define IM_PI 3.14159265358979323846f
@@ -20,11 +21,11 @@ static ImVec2 ApplySnapping(ImGuiID self_id, ImVec2 pos, ImVec2 size, float snap
     ImVec2 vp_min = vp->WorkPos;
     ImVec2 vp_max(vp->WorkPos.x + vp->WorkSize.x, vp->WorkPos.y + vp->WorkSize.y);
 
-    if (fabs(pos.x - vp_min.x) < snap_dist) pos.x = vp_min.x;
-    if (fabs(pos.y - vp_min.y) < snap_dist) pos.y = vp_min.y;
-    if (fabs((pos.x + size.x) - vp_max.x) < snap_dist)
+    if (std::fabs(pos.x - vp_min.x) < snap_dist) pos.x = vp_min.x;
+    if (std::fabs(pos.y - vp_min.y) < snap_dist) pos.y = vp_min.y;
+    if (std::fabs((pos.x + size.x) - vp_max.x) < snap_dist)
         pos.x = vp_max.x - size.x;
-    if (fabs((pos.y + size.y) - vp_max.y) < snap_dist)
+    if (std::fabs((pos.y + size.y) - vp_max.y) < snap_dist)
         pos.y = vp_max.y - size.y;
 
     for (const auto& w : ImGuiSnapWindow::g_SnapWindowsPrev)
@@ -35,40 +36,40 @@ static ImVec2 ApplySnapping(ImGuiID self_id, ImVec2 pos, ImVec2 size, float snap
         bool local_snap_x = false;
         bool local_snap_y = false;
 
-        if (fabs(pos.y - (w.pos.y + w.size.y)) < snap_dist)
+        if (std::fabs(pos.y - (w.pos.y + w.size.y)) < snap_dist)
         {
-            pos.y = w.pos.y + w.size.y - 1.f;
+            pos.y = w.pos.y + w.size.y;
             local_snap_y = true;
         }
-        else if (fabs((pos.y + size.y) - w.pos.y) < snap_dist)
+        else if (std::fabs((pos.y + size.y) - w.pos.y) < snap_dist)
         {
-            pos.y = w.pos.y - size.y + 1.f;
+            pos.y = w.pos.y - size.y;
             local_snap_y = true;
         }
 
-        if (fabs(pos.x - (w.pos.x + w.size.x)) < snap_dist)
+        if (std::fabs(pos.x - (w.pos.x + w.size.x)) < snap_dist)
         {
-            pos.x = w.pos.x + w.size.x - 1.f;
+            pos.x = w.pos.x + w.size.x;
             local_snap_x = true;
         }
-        else if (fabs((pos.x + size.x) - w.pos.x) < snap_dist)
+        else if (std::fabs((pos.x + size.x) - w.pos.x) < snap_dist)
         {
-            pos.x = w.pos.x - size.x + 1.f;
+            pos.x = w.pos.x - size.x;
             local_snap_x = true;
         }
 
         if (local_snap_y)
         {
-            if (fabs(pos.x - w.pos.x) < snap_dist)
+            if (std::fabs(pos.x - w.pos.x) < snap_dist)
                 pos.x = w.pos.x;
-            else if (fabs((pos.x + size.x) - (w.pos.x + w.size.x)) < snap_dist)
+            else if (std::fabs((pos.x + size.x) - (w.pos.x + w.size.x)) < snap_dist)
                 pos.x = w.pos.x + w.size.x - size.x;
             else
             {
                 float self_center = pos.x + size.x * 0.5f;
                 float other_center = w.pos.x + w.size.x * 0.5f;
 
-                if (fabs(self_center - other_center) < snap_dist)
+                if (std::fabs(self_center - other_center) < snap_dist)
                     pos.x = other_center - size.x * 0.5f;
             }
 
@@ -77,16 +78,16 @@ static ImVec2 ApplySnapping(ImGuiID self_id, ImVec2 pos, ImVec2 size, float snap
 
         if (local_snap_x)
         {
-            if (fabs(pos.y - w.pos.y) < snap_dist)
+            if (std::fabs(pos.y - w.pos.y) < snap_dist)
                 pos.y = w.pos.y;
-            else if (fabs((pos.y + size.y) - (w.pos.y + w.size.y)) < snap_dist)
+            else if (std::fabs((pos.y + size.y) - (w.pos.y + w.size.y)) < snap_dist)
                 pos.y = w.pos.y + w.size.y - size.y;
             else
             {
                 float self_center = pos.y + size.y * 0.5f;
                 float other_center = w.pos.y + w.size.y * 0.5f;
 
-                if (fabs(self_center - other_center) < snap_dist)
+                if (std::fabs(self_center - other_center) < snap_dist)
                     pos.y = other_center - size.y * 0.5f;
             }
 
@@ -322,6 +323,7 @@ void ImGui::LoadTimerStyle(ImGuiStyle& style)
     style.WindowPadding = ImVec2(7.f, 7.f);
     style.WindowMinSize = ImVec2(1.f, 1.f);
     style.FramePadding = ImVec2(6.f, 2.f);
+    style.CellPadding = ImVec2(4.f, 0.f);
     style.ItemSpacing = ImVec2(6.f, 3.f);
     style.GrabMinSize = 16.f;
     style.WindowRounding = 5.f;

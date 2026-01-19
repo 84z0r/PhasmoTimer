@@ -68,7 +68,7 @@ std::string CUpdater::GetLatestVersion()
 bool CUpdater::CheckUpdateAvailable()
 {
     std::string latest_ver = this->GetLatestVersion();
-    uint64_t uLatestVersion = 0Ui64;
+    uint64_t uLatestVersion = 0ULL;
     if (!CTools::Get().parseULL(latest_ver, uLatestVersion))
         return false;
 

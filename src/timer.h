@@ -1,6 +1,6 @@
 #pragma once
 #include <chrono>
-#include "imgui.h"
+#include <imgui/imgui.h>
 
 class CTimer
 {
@@ -12,8 +12,8 @@ public:
 protected:
 	void UpdateString();
 	std::chrono::steady_clock::time_point start_time{};
-	int64_t value_ms = 0i64;
-	int64_t start_from_ms = 0i64;
+	int64_t value_ms = 0LL;
+	int64_t start_from_ms = 0LL;
 	char buffer[16] = {};
 	ImVec4 color[2] = {};
 	bool bRunning = false;

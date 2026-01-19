@@ -1,6 +1,6 @@
 #include "input.h"
 
-constexpr std::chrono::milliseconds HOLD_REG_DELAY_MS(400i64);
+constexpr std::chrono::milliseconds HOLD_REG_DELAY_MS(400LL);
 
 void CInput::InputThread()
 {
