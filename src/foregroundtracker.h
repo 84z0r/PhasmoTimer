@@ -25,5 +25,5 @@ private:
     bool bLastRet = false;
     bool bLastSelfActive = true;
 
-    bool IsCorrectGameProcess(DWORD pid);
+    bool IsCorrectGameProcess(DWORD pid) const;
 };

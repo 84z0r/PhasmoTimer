@@ -10,6 +10,7 @@
 #include "tools.h"
 #include "render.h"
 #include "fonts.h"
+#include "stamina.h"
 
 constexpr const ImGuiWindowFlags timer_window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse;
 constexpr const float top_ratio = 0.675f;
@@ -47,6 +48,7 @@ void CGui::OnRender()
     this->UpdaterWindow();
     this->SettingsWindow();
     this->TimerWindows();
+	CStamina::Get().StaminaWindow();
     this->AboutWindow();
 }
 
@@ -157,6 +159,59 @@ void CGui::SettingsWindow()
 
         if (ImGui::BeginTabBar("SettingsTabs", ImGuiTabBarFlags_None))
         {
+            if (ImGui::BeginTabItem("Binds"))
+            {
+                if (ImGui::BeginTable("BindsTable", 2, ImGuiTableFlags_None))
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::SeparatorText("Game Binds");
+                    this->KeyBindButton("Touch", &CConfig::Get().vkTouchBind);
+                    this->KeyBindButton("Use", &CConfig::Get().vkUseBind);
+                    ImGui::SetItemTooltip("WARNING: The \"Use\" bind in game\nshould be the save as the \"Use Hold\"!");
+                    this->KeyBindButton("Sprint", &CConfig::Get().vkSprintBind);
+                    ImGui::SetItemTooltip("WARNING: Only \"Hold\" mode is supported!");
+                    this->KeyBindButton("Move Forward", &CConfig::Get().vkForwardBind);
+                    this->KeyBindButton("Move Backward", &CConfig::Get().vkBackwardBind);
+                    this->KeyBindButton("Move Left", &CConfig::Get().vkLeftBind);
+                    this->KeyBindButton("Move Right", &CConfig::Get().vkRightBind);
+
+                    ImGui::TableSetColumnIndex(1);
+
+                    ImGui::SeparatorText("Timer Binds");
+                    this->KeyBindButton("Smudge Timer", &CConfig::Get().vkSmudgeTimerBind);
+                    this->KeyBindButton("Smudge Timer Mode", &CConfig::Get().vkSwitchSmudgeTimerModeBind);
+                    this->KeyBindButton("Hunt Timer", &CConfig::Get().vkHuntTimerBind);
+                    this->KeyBindButton("Candle Timer", &CConfig::Get().vkCandleTimerBind);
+                    ImGui::SetItemTooltip("Split Mode only!");
+                    this->KeyBindButton("Full Reset", &CConfig::Get().vkFullResetBind);
+                    this->KeyBindButton("Reset", &CConfig::Get().vkResetBind);
+                    ImGui::SetItemTooltip("Hold \"Reset\" bind and any timer\nbind to reset the timer");
+
+                    if (ImGui::BeginPopupModal("Keybind conflict", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+                    {
+                        ImGui::Text("This key is already bound to another action!");
+                        ImGui::Spacing();
+                        ImGui::Separator();
+                        ImGui::Spacing();
+
+                        float flButtonSize = 80.f * Style.FontScaleDpi;
+                        ImVec2 windowSize = ImGui::GetWindowSize();
+                        ImGui::SetCursorPosX((windowSize.x - flButtonSize) * 0.5f);
+                        if (ImGui::Button("OK", ImVec2(flButtonSize, 0)))
+                            ImGui::CloseCurrentPopup();
+
+                        ImGui::EndPopup();
+                    }
+
+                    ImGui::EndTable();
+                }
+
+                ImGui::EndTabItem();
+            }
+
             if (ImGui::BeginTabItem("Main"))
             {
                 if (ImGui::BeginTable("MainTable", 2, ImGuiTableFlags_None))
@@ -200,19 +255,6 @@ void CGui::SettingsWindow()
                     }
 
                     ImGui::TableSetColumnIndex(1);
-
-                    ImGui::SeparatorText("Keybinds");
-                    this->KeyBindButton("Smudge Timer", &CConfig::Get().vkSmudgeTimerBind);
-                    this->KeyBindButton("Smudge Timer Mode", &CConfig::Get().vkSwitchSmudgeTimerModeBind);
-                    this->KeyBindButton("Hunt Timer", &CConfig::Get().vkHuntTimerBind);
-                    this->KeyBindButton("Candle Timer", &CConfig::Get().vkCandleTimerBind);
-                    ImGui::SetItemTooltip("Split Mode only!");
-                    this->KeyBindButton("Full Reset", &CConfig::Get().vkFullResetBind);
-                    this->KeyBindButton("Reset", &CConfig::Get().vkResetBind);
-                    ImGui::SetItemTooltip("Hold \"Reset\" bind and any timer\nbind to reset the timer");
-                    this->KeyBindButton("Touch", &CConfig::Get().vkTouchBind);
-                    this->KeyBindButton("Use", &CConfig::Get().vkUseBind);
-                    ImGui::SetItemTooltip("WARNING: The \"Use\" bind in game\nshould be the save as the \"Use Hold\"!");
 
                     ImGui::SeparatorText("Update");
                     ImGui::Checkbox("Check For Updates", &CConfig::Get().bCheckUpdates);
@@ -366,6 +408,50 @@ void CGui::SettingsWindow()
 
                     ImGui::ColorEdit4("Candle Timer Top", reinterpret_cast<float*>(&CConfig::Get().imvCandleTimerColor1), ImGuiColorEditFlags_NoInputs);
                     ImGui::ColorEdit4("Candle Timer Bottom", reinterpret_cast<float*>(&CConfig::Get().imvCandleTimerColor2), ImGuiColorEditFlags_NoInputs);
+
+                    ImGui::EndTable();
+                }
+
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Stamina"))
+            {
+                if (ImGui::BeginTable("StaminaTable", 2, ImGuiTableFlags_None))
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::SeparatorText("Stamina Bar");
+                    ImGui::Checkbox("Enable Stamina Bar", &CConfig::Get().bEnableStaminaBar);
+
+                    if (CConfig::Get().bEnableStaminaBar)
+                    {
+                        ImGui::SeparatorText("Stamina Bar Size");
+                        ImGui::PushItemWidth(215.f * Style.FontScaleDpi);
+                        ImGui::SliderFloat("Width", &CConfig::Get().imvStaminaBarSize.x, 30.f, 1000.f, "%.0f");
+                        ImGui::SliderFloat("Height", &CConfig::Get().imvStaminaBarSize.y, 15.f, 100.f, "%.0f");
+                        ImGui::SliderFloat("Padding", &CConfig::Get().flStaminaBarPadding, 0.f, 15.f, "%.0f");
+                        ImGui::SliderFloat("Rounding", &CConfig::Get().flStaminaBarRounding, 0.f, 12.f, "%.0f");
+                        ImGui::SliderFloat("Fill Rounding", &CConfig::Get().flStaminaBarFillRounding, 0.f, 12.f, "%.0f");
+                        ImGui::PopItemWidth();
+
+                        ImGui::SeparatorText("Misc");
+						ImGui::Checkbox("Gloss", &CConfig::Get().bEnableStaminaBarGloss);
+                        ImGui::Checkbox("Flash When Exhausted", &CConfig::Get().bStaminaFlashOnExhausted);
+
+                        ImGui::TableSetColumnIndex(1);
+
+                        ImGui::SeparatorText("Stamina Bar Colors##stamina_bar_colors");
+                        ImGui::ColorEdit4("Background", reinterpret_cast<float*>(&CConfig::Get().imvStaminaBackgroundColor), ImGuiColorEditFlags_NoInputs);
+                        ImGui::ColorEdit4("Borders", reinterpret_cast<float*>(&CConfig::Get().imvStaminaBordersColor), ImGuiColorEditFlags_NoInputs);
+						ImGui::ColorEdit4("Fill Top", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorTop), ImGuiColorEditFlags_NoInputs);
+                        ImGui::ColorEdit4("Fill Bottom", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorBottom), ImGuiColorEditFlags_NoInputs);
+                        ImGui::ColorEdit4("Fill Exhausted Top", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorExhaustedTop), ImGuiColorEditFlags_NoInputs);
+                        ImGui::ColorEdit4("Fill Exhausted Bottom", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorExhaustedBottom), ImGuiColorEditFlags_NoInputs);
+                        ImGui::ColorEdit4("Flash Exhausted", reinterpret_cast<float*>(&CConfig::Get().imvStaminaFlashExhaustedColor), ImGuiColorEditFlags_NoInputs);
+                    }
 
                     ImGui::EndTable();
                 }
@@ -570,10 +656,17 @@ bool CGui::KeyBindButton(const char* label, int* vk_key)
             waiting = false;
             active_key = nullptr;
 
-            if (key->first == VK_ESCAPE) return false;
+            int new_vk = key->first;
+            if (new_vk == VK_ESCAPE)
+                return false;
+
+            if (CConfig::Get().IsKeyAlreadyBound(new_vk, vk_key))
+            {
+                ImGui::OpenPopup("Keybind conflict");
+            }
             else
             {
-                *vk_key = key->first;
+                *vk_key = new_vk;
                 return true;
             }
         }

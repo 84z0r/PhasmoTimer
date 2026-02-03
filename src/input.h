@@ -36,11 +36,11 @@ public:
     void OnFrameStart(bool bActive);
     void OnFrameEnd();
     const InputKeyData& GetKeyData(int vk);
-    const std::unordered_map<int, InputKeyData>& GetKeyDataMap();
+    const std::unordered_map<int, InputKeyData>& GetKeyDataMap() const;
 
 private:
     static LRESULT CALLBACK InputWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    bool IsMouseButton(int vk);
+    bool IsMouseButton(int vk) const;
     std::atomic<HWND> hwnd{ nullptr };
     LockFreeQueue<KeyEvent, 2048> keyQueue;
     std::unordered_map<int, InputKeyData> buttonsMap;

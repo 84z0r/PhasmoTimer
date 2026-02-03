@@ -9,6 +9,7 @@
 #include "../resource.h"
 #include "gui.h"
 #include "fonts.h"
+#include "stamina.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.hpp"
 
@@ -58,6 +59,7 @@ bool CRender::StartNewFrame()
     this->bGameWindowActive = CConfig::Get().bCheckActiveWindow ? CGameForegroundTracker::Get().IsGameActive(this->bSelfWindowActive, this->now_time) : true;
 
     CInput::Get().OnFrameStart(this->bGameWindowActive || this->bSelfWindowActive);
+    CStamina::Get().OnFrameStart();
     CGui::Get().OnFrameStart();
 
     // Handle window being minimized or screen locked

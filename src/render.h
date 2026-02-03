@@ -15,9 +15,9 @@ public:
 	void Cleanup();
 	void RenderLoop();
 
-	inline bool IsGameWindowActive() { return this->bGameWindowActive; }
-	inline bool IsSelfWindowActive() { return this->bSelfWindowActive; }
-	inline const std::chrono::steady_clock::time_point& GetNowTime() { return this->now_time; }
+	inline bool IsGameWindowActive() const { return this->bGameWindowActive; }
+	inline bool IsSelfWindowActive() const { return this->bSelfWindowActive; }
+	inline const std::chrono::steady_clock::time_point& GetNowTime() const { return this->now_time; }
 	
 	ID3D11ShaderResourceView* logo_texture = nullptr;
 	bool bWantExit = false;

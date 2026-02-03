@@ -56,7 +56,7 @@ void CGameForegroundTracker::SetOwnHwnd(HWND hwnd)
     this->m_ownHwnd = hwnd;
 }
 
-bool CGameForegroundTracker::IsCorrectGameProcess(DWORD pid)
+bool CGameForegroundTracker::IsCorrectGameProcess(DWORD pid) const
 {
     if (this->m_exeName.empty())
         return false;

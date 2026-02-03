@@ -18,7 +18,7 @@ CConfig::CConfig()
     this->configFilePath /= "config.json";
 }
 
-bool CConfig::Load()
+bool CConfig::Load(bool bFirstLoad)
 {
     FILE* file = nullptr;
     errno_t err = _wfopen_s(&file, this->configFilePath.c_str(), L"rb");
@@ -71,6 +71,9 @@ bool CConfig::Load()
     if (doc.HasMember("bScanSystemFonts") && doc["bScanSystemFonts"].IsBool()) this->bScanSystemFonts = doc["bScanSystemFonts"].GetBool();
     if (doc.HasMember("bScanUserFonts") && doc["bScanUserFonts"].IsBool()) this->bScanUserFonts = doc["bScanUserFonts"].GetBool();
     if (doc.HasMember("bScanAppFonts") && doc["bScanAppFonts"].IsBool()) this->bScanAppFonts = doc["bScanAppFonts"].GetBool();
+    if (doc.HasMember("bEnableStaminaBar") && doc["bEnableStaminaBar"].IsBool()) this->bEnableStaminaBar = doc["bEnableStaminaBar"].GetBool();
+    if (doc.HasMember("bEnableStaminaBarGloss") && doc["bEnableStaminaBarGloss"].IsBool()) this->bEnableStaminaBarGloss = doc["bEnableStaminaBarGloss"].GetBool();
+    if (doc.HasMember("bStaminaFlashOnExhausted") && doc["bStaminaFlashOnExhausted"].IsBool()) this->bStaminaFlashOnExhausted = doc["bStaminaFlashOnExhausted"].GetBool();
 
     if (doc.HasMember("vkSmudgeTimerBind") && doc["vkSmudgeTimerBind"].IsInt()) this->vkSmudgeTimerBind = doc["vkSmudgeTimerBind"].GetInt();
     if (doc.HasMember("vkSwitchSmudgeTimerModeBind") && doc["vkSwitchSmudgeTimerModeBind"].IsInt()) this->vkSwitchSmudgeTimerModeBind = doc["vkSwitchSmudgeTimerModeBind"].GetInt();
@@ -80,6 +83,11 @@ bool CConfig::Load()
     if (doc.HasMember("vkResetBind") && doc["vkResetBind"].IsInt()) this->vkResetBind = doc["vkResetBind"].GetInt();
     if (doc.HasMember("vkTouchBind") && doc["vkTouchBind"].IsInt()) this->vkTouchBind = doc["vkTouchBind"].GetInt();
     if (doc.HasMember("vkUseBind") && doc["vkUseBind"].IsInt()) this->vkUseBind = doc["vkUseBind"].GetInt();
+    if (doc.HasMember("vkSprintBind") && doc["vkSprintBind"].IsInt()) this->vkSprintBind = doc["vkSprintBind"].GetInt();
+    if (doc.HasMember("vkForwardBind") && doc["vkForwardBind"].IsInt()) this->vkForwardBind = doc["vkForwardBind"].GetInt();
+    if (doc.HasMember("vkBackwardBind") && doc["vkBackwardBind"].IsInt()) this->vkBackwardBind = doc["vkBackwardBind"].GetInt();
+    if (doc.HasMember("vkLeftBind") && doc["vkLeftBind"].IsInt()) this->vkLeftBind = doc["vkLeftBind"].GetInt();
+    if (doc.HasMember("vkRightBind") && doc["vkRightBind"].IsInt()) this->vkRightBind = doc["vkRightBind"].GetInt();
 
     if (doc.HasMember("iStartSmudgeTimerAt") && doc["iStartSmudgeTimerAt"].IsInt64()) this->iStartSmudgeTimerAt = doc["iStartSmudgeTimerAt"].GetInt64();
     if (doc.HasMember("iStartHuntTimerAt") && doc["iStartHuntTimerAt"].IsInt64()) this->iStartHuntTimerAt = doc["iStartHuntTimerAt"].GetInt64();
@@ -93,6 +101,9 @@ bool CConfig::Load()
     if (doc.HasMember("flCandleTimerSize") && doc["flCandleTimerSize"].IsFloat()) this->flCandleTimerSize = doc["flCandleTimerSize"].GetFloat();
     if (doc.HasMember("flRounding") && doc["flRounding"].IsFloat()) this->flRounding = doc["flRounding"].GetFloat();
     if (doc.HasMember("flInactiveAlpha") && doc["flInactiveAlpha"].IsFloat()) this->flInactiveAlpha = doc["flInactiveAlpha"].GetFloat();
+    if (doc.HasMember("flStaminaBarRounding") && doc["flStaminaBarRounding"].IsFloat()) this->flStaminaBarRounding = doc["flStaminaBarRounding"].GetFloat();
+    if (doc.HasMember("flStaminaBarFillRounding") && doc["flStaminaBarFillRounding"].IsFloat()) this->flStaminaBarFillRounding = doc["flStaminaBarFillRounding"].GetFloat();
+    if (doc.HasMember("flStaminaBarPadding") && doc["flStaminaBarPadding"].IsFloat()) this->flStaminaBarPadding = doc["flStaminaBarPadding"].GetFloat();
 
     auto LoadImVec2 = [&](const char* name, ImVec2& value)
         {
@@ -108,6 +119,9 @@ bool CConfig::Load()
     LoadImVec2("imvObamboTimerWindowPos", this->imvObamboTimerWindowPos);
     LoadImVec2("imvHuntTimerWindowPos", this->imvHuntTimerWindowPos);
     LoadImVec2("imvCandleTimerWindowPos", this->imvCandleTimerWindowPos);
+
+    LoadImVec2("imvStaminaBarPos", this->imvStaminaBarPos);
+    LoadImVec2("imvStaminaBarSize", this->imvStaminaBarSize);
 
     auto LoadImVec4 = [&](const char* name, ImVec4& value)
         {
@@ -143,16 +157,21 @@ bool CConfig::Load()
     LoadImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
     LoadImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
 
+    LoadImVec4("imvStaminaBackgroundColor", this->imvStaminaBackgroundColor);
+    LoadImVec4("imvStaminaBordersColor", this->imvStaminaBordersColor);
+    LoadImVec4("imvStaminaColorTop", this->imvStaminaColorTop);
+    LoadImVec4("imvStaminaColorBottom", this->imvStaminaColorBottom);
+    LoadImVec4("imvStaminaColorExhaustedTop", this->imvStaminaColorExhaustedTop);
+    LoadImVec4("imvStaminaColorExhaustedBottom", this->imvStaminaColorExhaustedBottom);
+    LoadImVec4("imvStaminaFlashExhaustedColor", this->imvStaminaFlashExhaustedColor);
+
     if (doc.HasMember("strGameProcessName") && doc["strGameProcessName"].IsString())
         this->strGameProcessName = doc["strGameProcessName"].GetString();
 
     if (doc.HasMember("fontFileName") && doc["fontFileName"].IsString())
         this->fontFileName = doc["fontFileName"].GetString();
 
-    if (bInitialized)
-        this->bConfigUpdated = true;
-
-	this->bInitialized = true;
+    this->bConfigUpdated = !bFirstLoad;
     return true;
 }
 
@@ -172,6 +191,9 @@ bool CConfig::Save()
     doc.AddMember("bScanSystemFonts", this->bScanSystemFonts, alloc);
     doc.AddMember("bScanUserFonts", this->bScanUserFonts, alloc);
     doc.AddMember("bScanAppFonts", this->bScanAppFonts, alloc);
+    doc.AddMember("bEnableStaminaBar", this->bEnableStaminaBar, alloc);
+    doc.AddMember("bEnableStaminaBarGloss", this->bEnableStaminaBarGloss, alloc);
+    doc.AddMember("bStaminaFlashOnExhausted", this->bStaminaFlashOnExhausted, alloc);
 
     doc.AddMember("vkSmudgeTimerBind", this->vkSmudgeTimerBind, alloc);
     doc.AddMember("vkSwitchSmudgeTimerModeBind", this->vkSwitchSmudgeTimerModeBind, alloc);
@@ -181,6 +203,11 @@ bool CConfig::Save()
     doc.AddMember("vkResetBind", this->vkResetBind, alloc);
     doc.AddMember("vkTouchBind", this->vkTouchBind, alloc);
     doc.AddMember("vkUseBind", this->vkUseBind, alloc);
+    doc.AddMember("vkSprintBind", this->vkSprintBind, alloc);
+    doc.AddMember("vkForwardBind", this->vkForwardBind, alloc);
+    doc.AddMember("vkBackwardBind", this->vkBackwardBind, alloc);
+    doc.AddMember("vkLeftBind", this->vkLeftBind, alloc);
+    doc.AddMember("vkRightBind", this->vkRightBind, alloc);
 
     doc.AddMember("iStartSmudgeTimerAt", this->iStartSmudgeTimerAt, alloc);
     doc.AddMember("iStartHuntTimerAt", this->iStartHuntTimerAt, alloc);
@@ -194,6 +221,9 @@ bool CConfig::Save()
     doc.AddMember("flCandleTimerSize", this->flCandleTimerSize, alloc);
     doc.AddMember("flRounding", this->flRounding, alloc);
     doc.AddMember("flInactiveAlpha", this->flInactiveAlpha, alloc);
+    doc.AddMember("flStaminaBarRounding", this->flStaminaBarRounding, alloc);
+    doc.AddMember("flStaminaBarFillRounding", this->flStaminaBarFillRounding, alloc);
+    doc.AddMember("flStaminaBarPadding", this->flStaminaBarPadding, alloc);
 
     auto SaveImVec2 = [&](const char* name, const ImVec2& value)
         {
@@ -208,6 +238,9 @@ bool CConfig::Save()
     SaveImVec2("imvObamboTimerWindowPos", this->imvObamboTimerWindowPos);
     SaveImVec2("imvHuntTimerWindowPos", this->imvHuntTimerWindowPos);
     SaveImVec2("imvCandleTimerWindowPos", this->imvCandleTimerWindowPos);
+
+    SaveImVec2("imvStaminaBarPos", this->imvStaminaBarPos);
+    SaveImVec2("imvStaminaBarSize", this->imvStaminaBarSize);
 
     auto SaveImVec4 = [&](const char* name, const ImVec4& value)
         {
@@ -241,6 +274,14 @@ bool CConfig::Save()
 
     SaveImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
     SaveImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
+
+    SaveImVec4("imvStaminaBackgroundColor", this->imvStaminaBackgroundColor);
+    SaveImVec4("imvStaminaBordersColor", this->imvStaminaBordersColor);
+    SaveImVec4("imvStaminaColorTop", this->imvStaminaColorTop);
+    SaveImVec4("imvStaminaColorBottom", this->imvStaminaColorBottom);
+    SaveImVec4("imvStaminaColorExhaustedTop", this->imvStaminaColorExhaustedTop);
+    SaveImVec4("imvStaminaColorExhaustedBottom", this->imvStaminaColorExhaustedBottom);
+    SaveImVec4("imvStaminaFlashExhaustedColor", this->imvStaminaFlashExhaustedColor);
 
     rapidjson::Value Value;
     Value.SetString(this->strGameProcessName.c_str(), static_cast<rapidjson::SizeType>(this->strGameProcessName.length()), alloc);
@@ -277,4 +318,39 @@ bool CConfig::Save()
 void CConfig::OnFrameEnd()
 {
     this->bConfigUpdated = false;
+}
+
+std::vector<const int*> CConfig::GetAllKeybinds() const
+{
+    return {
+        &this->vkSmudgeTimerBind,
+        &this->vkSwitchSmudgeTimerModeBind,
+        &this->vkHuntTimerBind,
+        &this->vkCandleTimerBind,
+        &this->vkFullResetBind,
+        &this->vkResetBind,
+        &this->vkTouchBind,
+        &this->vkUseBind,
+        &this->vkSprintBind,
+        &this->vkForwardBind,
+        &this->vkBackwardBind,
+        &this->vkLeftBind,
+		&this->vkRightBind
+    };
+}
+
+bool CConfig::IsKeyAlreadyBound(int vk, int* except) const
+{
+	const auto allKeybinds = this->GetAllKeybinds();
+
+    for (const auto keyPtr : allKeybinds)
+    {
+        if (keyPtr == except)
+            continue;
+
+        if (*keyPtr == vk)
+            return true;
+    }
+
+    return false;
 }

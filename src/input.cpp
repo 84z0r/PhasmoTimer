@@ -151,12 +151,12 @@ const InputKeyData& CInput::GetKeyData(int vk)
     return this->buttonsMap[vk];
 }
 
-const std::unordered_map<int, InputKeyData>& CInput::GetKeyDataMap()
+const std::unordered_map<int, InputKeyData>& CInput::GetKeyDataMap() const
 {
     return this->buttonsMap;
 }
 
-bool CInput::IsMouseButton(int vk)
+bool CInput::IsMouseButton(int vk) const
 {
     return vk > 0 && vk < 0x07 && vk != VK_CANCEL;
 }
