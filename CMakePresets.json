@@ -2,16 +2,42 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "clang-cl-vcpkg",
+      "name": "llvm21-maxopt",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "D:/Documents/Visual Studio/lib/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_C_COMPILER": "clang-cl",
-        "CMAKE_CXX_COMPILER": "clang-cl",
+        "CMAKE_C_COMPILER": "C:/Program Files/LLVM/bin/clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "C:/Program Files/LLVM/bin/clang-cl.exe",
+        "CMAKE_LINKER": "C:/Program Files/LLVM/bin/lld-link.exe",
         "CMAKE_BUILD_TYPE": "Release",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE",
+        "ENABLE_AVX2": "ON"
       }
+    },
+    {
+      "name": "llvm21-maxopt-noavx",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-noavx",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "C:/Program Files/LLVM/bin/clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "C:/Program Files/LLVM/bin/clang-cl.exe",
+        "CMAKE_LINKER": "C:/Program Files/LLVM/bin/lld-link.exe",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE",
+        "ENABLE_AVX2": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "llvm21-maxopt",
+      "configurePreset": "llvm21-maxopt",
+      "displayName": "LLVM Release (with AVX2)"
+    },
+    {
+      "name": "llvm21-maxopt-noavx",
+      "configurePreset": "llvm21-maxopt-noavx",
+      "displayName": "LLVM Release (no AVX2)"
     }
   ]
 }
