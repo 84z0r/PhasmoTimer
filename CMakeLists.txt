@@ -36,6 +36,7 @@ set(APP_SRC
 )
 
 set(RESOURCES PhasmoTimer.rc)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
 add_executable(PhasmoTimer WIN32 ${IMGUI_SRC} ${APP_SRC} ${RESOURCES})
 target_include_directories(PhasmoTimer PRIVATE include src)
@@ -52,6 +53,7 @@ FetchContent_Declare(
     zlib
     GIT_REPOSITORY https://github.com/madler/zlib.git
     GIT_TAG v1.3.1
+	GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(zlib)
 
@@ -62,6 +64,7 @@ FetchContent_Declare(
     curl
     GIT_REPOSITORY https://github.com/curl/curl.git
     GIT_TAG curl-8_18_0
+	GIT_SHALLOW TRUE
 )
 
 set(BUILD_CURL_EXE OFF CACHE BOOL "" FORCE)
@@ -129,7 +132,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(PhasmoTimer PRIVATE
         /O2
         /Gw
-		/Gy
         /clang:-O3
         /clang:-flto=full
         /clang:-fdata-sections
