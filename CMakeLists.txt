@@ -129,8 +129,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(PhasmoTimer PRIVATE
         /O2
         /Gw
+		/Gy
         /clang:-O3
-        /clang:-flto=thin
+        /clang:-flto=full
         /clang:-fdata-sections
         /clang:-ffunction-sections
         /clang:-fmerge-all-constants
@@ -170,5 +171,5 @@ message(STATUS "==========================================")
 message(STATUS "PhasmoTimer LLVM Build")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "Using ThinLTO + lld-link")
+message(STATUS "Using FullLTO + lld-link")
 message(STATUS "==========================================")
