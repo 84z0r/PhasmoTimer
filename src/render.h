@@ -7,6 +7,7 @@
 #include <dxgi1_2.h>
 #include <dcomp.h>
 #include <chrono>
+#include <shellapi.h>
 
 class CRender : public Singleton<CRender>
 {

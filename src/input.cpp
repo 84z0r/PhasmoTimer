@@ -116,7 +116,7 @@ void CInput::OnFrameStart(bool bActive)
         if (e.pressed && keyData.bIsDown)
             continue;
 
-        auto CalcButtonRegTime = [&keyData, &e, this]()->void {
+        auto CalcButtonRegTime = [&keyData]()->void {
             if (std::chrono::duration_cast<std::chrono::milliseconds>(keyData.tLastReleaseTime - keyData.tLastPressTime) >= HOLD_REG_DELAY_MS)
                 keyData.tUseRegTime = keyData.tLastPressTime + HOLD_REG_DELAY_MS;
             else

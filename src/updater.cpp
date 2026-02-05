@@ -1,7 +1,6 @@
 #include "updater.h"
 #include "tools.h"
 #include "version.h"
-#define CURL_STATICLIB
 #include <curl/curl.h>
 
 static size_t write_callback(void* contents, size_t size, size_t nmemb, void* userp) {

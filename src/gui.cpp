@@ -154,7 +154,6 @@ void CGui::SettingsWindow()
     {
         ImVec2 btn_size(90 * Style.FontScaleDpi, 25 * Style.FontScaleDpi);
         ImVec2 content_max = ImGui::GetWindowContentRegionMax();
-        ImVec2 content_min = ImGui::GetWindowContentRegionMin();
         ImVec2 window_pos = ImGui::GetWindowPos();
 
         if (ImGui::BeginTabBar("SettingsTabs", ImGuiTabBarFlags_None))
