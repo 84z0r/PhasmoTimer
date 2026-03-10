@@ -64,7 +64,7 @@ void CInput::InputThread()
 
     MSG msg{};
     std::vector<BYTE> rawBuffer(RAWINPUT_BUFFER_CAPACITY);
-    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 
     while (WaitForSingleObject(this->hEvent, 0) != WAIT_OBJECT_0)
     {
