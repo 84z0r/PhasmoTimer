@@ -1,6 +1,7 @@
 #pragma once
 #include "singleton.h"
 #include "hud_bar.h"
+#include "snap_window.h"
 #include <chrono>
 
 class CStamina : public Singleton<CStamina>
@@ -24,12 +25,9 @@ private:
 		std::string("StaminaBar"),
 		std::chrono::duration<double>(this->MAX_SPRINT_TIME).count(),
 		std::chrono::duration<double>(this->MAX_SPRINT_TIME).count(),
-		CConfig::Get().flStaminaBarRounding,
 		CConfig::Get().flStaminaBarFillRounding,
 		CConfig::Get().flStaminaBarPadding,
 		CConfig::Get().imvStaminaBarSize,
-		CConfig::Get().imvStaminaBackgroundColor,
-		CConfig::Get().imvStaminaBordersColor,
 		CConfig::Get().imvStaminaColorTop,
 		CConfig::Get().imvStaminaColorBottom,
 		CConfig::Get().imvStaminaColorExhaustedTop,

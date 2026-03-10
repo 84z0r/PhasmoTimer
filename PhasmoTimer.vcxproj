@@ -109,7 +109,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -118,8 +118,10 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;dcomp.lib;Ws2_32.lib;Crypt32.lib;Iphlpapi.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;dcomp.lib;Ws2_32.lib;Crypt32.lib;Iphlpapi.lib;secur32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64</AdditionalLibraryDirectories>
+      <AdditionalOptions>/NODEFAULTLIB:LIBCMT /NODEFAULTLIB:LIBCMTD %(AdditionalOptions)</AdditionalOptions>
+      <GenerateMapFile>false</GenerateMapFile>
     </Link>
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
@@ -131,7 +133,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;NOMINMAX;ENABLE_AVX2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>Default</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -151,7 +153,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;dcomp.lib;Ws2_32.lib;Crypt32.lib;Iphlpapi.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;dcomp.lib;Ws2_32.lib;Crypt32.lib;Iphlpapi.lib;secur32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:LIBCMT</AdditionalOptions>
       <GenerateMapFile>false</GenerateMapFile>
       <GenerateWindowsMetadata>
@@ -200,7 +202,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;dcomp.lib;Ws2_32.lib;Crypt32.lib;Iphlpapi.lib;secur32.lib;libcurl.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;dcomp.lib;Ws2_32.lib;Crypt32.lib;Iphlpapi.lib;secur32.lib;libcurl.lib;zlib.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:LIBCMT  /OPT:ICF=10</AdditionalOptions>
       <GenerateMapFile>false</GenerateMapFile>
       <GenerateWindowsMetadata>
@@ -220,6 +222,7 @@
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\dwm.cpp" />
     <ClCompile Include="src\fonts.cpp" />
     <ClCompile Include="src\foregroundtracker.cpp" />
     <ClCompile Include="src\gui.cpp" />
@@ -228,6 +231,7 @@
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render.cpp" />
+    <ClCompile Include="src\snap_window.cpp" />
     <ClCompile Include="src\stamina.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\tools.cpp" />
@@ -244,6 +248,7 @@
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\dwm.h" />
     <ClInclude Include="src\fonts.h" />
     <ClInclude Include="src\font_comicz.h" />
     <ClInclude Include="src\foregroundtracker.h" />
@@ -256,6 +261,7 @@
     <ClInclude Include="src\render.h" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\singleton.h" />
+    <ClInclude Include="src\snap_window.h" />
     <ClInclude Include="src\stamina.h" />
     <ClInclude Include="src\stb_image.hpp" />
     <ClInclude Include="src\timer.h" />

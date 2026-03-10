@@ -29,7 +29,6 @@ class CInput : public Singleton<CInput>
 {
 public:
     //Input Thread
-    void ProcessNewMessage(LPARAM lParam);
     void InputThread();
     void StopInputThread();
     //RenderThread
@@ -40,8 +39,12 @@ public:
 
 private:
     static LRESULT CALLBACK InputWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    void ProcessRawMouseInput(const RAWMOUSE& raw, const std::chrono::steady_clock::time_point& now);
+    void ProcessRawKeyboardInput(const RAWKEYBOARD& raw, const std::chrono::steady_clock::time_point& now);
+    void ProcessRawInputBuffer(std::vector<BYTE>& rawBuffer);
     bool IsMouseButton(int vk) const;
-    std::atomic<HWND> hwnd{ nullptr };
+	std::atomic<bool> bRunning{ true };
+    HANDLE hEvent = nullptr;
     LockFreeQueue<KeyEvent, 2048> keyQueue;
     std::unordered_map<int, InputKeyData> buttonsMap;
 };

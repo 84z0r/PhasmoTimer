@@ -7,9 +7,10 @@
 class CConfig : public Singleton<CConfig>
 {
 public:
-	CConfig();
-	bool Load(bool bFirstLoad = false);
-	bool Save();
+	void Init();
+	inline void Load() { this->bNeedToLoad = true; };
+	inline void Save() { this->bNeedToSave = true; };
+	void OnFrameStart();
 	void OnFrameEnd();
 	bool IsKeyAlreadyBound(int vk, int* except) const;
 
@@ -17,10 +18,10 @@ public:
 
 	bool bCheckActiveWindow = true;
 	bool bCheckUpdates = true;
-	bool bEnableSplitMode = false;
-	bool bEnableSplitObambo = false;
-	bool bEnableSplitHunt = false;
-	bool bEnableSplitCandle = false;
+	bool bEnableObamboTimer = false;
+	bool bEnableHuntTimer = false;
+	bool bEnableCandleTimer = false;
+	bool bEnableBorders = true;
 	bool bScanSystemFonts = true;
 	bool bScanUserFonts = true;
 	bool bScanAppFonts = true;
@@ -37,7 +38,7 @@ public:
 	int vkResetBind = 0x33;
 
 	//Game binds
-	int vkTouchBind = VK_LBUTTON;
+	int vkInteractBind = VK_LBUTTON;
 	int vkUseBind = VK_RBUTTON;
 	int vkSprintBind = VK_SHIFT;
 	int vkForwardBind = 0x57;
@@ -45,33 +46,34 @@ public:
 	int vkLeftBind = 0x41;
 	int vkRightBind = 0x44;
 
+	int iSyncMethod = 0;
+
 	int64_t iStartSmudgeTimerAt = 1000LL;
 	int64_t iStartHuntTimerAt = 1000LL;
 	int64_t iMaxMsSmudge = 180000LL;
 	int64_t iMaxMsHunt = 215000LL;
 
 	float flSize = 80.f;
-	float flSmudgeTimerSize = 56.f;
-	float flObamboTimerSize = 56.f;
-	float flHuntTimerSize = 56.f;
-	float flCandleTimerSize = 56.f;
+	float flSnappingDistance = 6.f;
+	float flSmudgeTimerSize = 55.2f;
+	float flObamboTimerSize = 28.4f;
+	float flHuntTimerSize = 28.4f;
+	float flCandleTimerSize = 28.4f;
 	float flRounding = 5.f;
 	float flInactiveAlpha = 0.25f;
-	float flStaminaBarRounding = 6.f;
 	float flStaminaBarFillRounding = 3.f;
-	float flStaminaBarPadding = 6.f;
+	float flStaminaBarPadding = 4.f;
 
-	ImVec2 imvTimerWindowPos = ImVec2(0.f, 0.f);
 	ImVec2 imvSmudgeTimerWindowPos = ImVec2(0.f, 0.f);
-	ImVec2 imvObamboTimerWindowPos = ImVec2(0.f, 55.f);
-	ImVec2 imvHuntTimerWindowPos = ImVec2(0.f, 110.f);
-	ImVec2 imvCandleTimerWindowPos = ImVec2(0.f, 165.f);
+	ImVec2 imvObamboTimerWindowPos = ImVec2(212.f, 0.f);
+	ImVec2 imvHuntTimerWindowPos = ImVec2(212.f, 27.f);
+	ImVec2 imvCandleTimerWindowPos = ImVec2(212.f, 54.f);
 
-	ImVec2 imvStaminaBarPos = ImVec2(0.f, 0.f);
-	ImVec2 imvStaminaBarSize = ImVec2(300.f, 40.f);
+	ImVec2 imvStaminaBarPos = ImVec2(0.f, 54.f);
+	ImVec2 imvStaminaBarSize = ImVec2(213.f, 28.f);
 
 	ImVec4 imvBackgroundColor = ImVec4(0.06f, 0.06f, 0.06f, 0.65f);
-	ImVec4 imvBordersColor = ImVec4(0.7f, 0.7f, 0.7f, 0.5f);
+	ImVec4 imvBorderColor = ImVec4(0.35f, 0.35f, 0.35f, 1.f);
 	ImVec4 imvGlowColor1 = ImVec4(0.60f, 0.90f, 1.00f, 1.f);
 	ImVec4 imvGlowColor2 = ImVec4(0.10f, 0.55f, 0.75f, 1.f);
 
@@ -93,8 +95,6 @@ public:
 	ImVec4 imvCandleTimerColor1 = ImVec4(0.55f, 0.95f, 0.85f, 1.0f);
 	ImVec4 imvCandleTimerColor2 = ImVec4(0.10f, 0.55f, 0.50f, 1.0f);
 
-	ImVec4 imvStaminaBackgroundColor = ImVec4(0.06f, 0.06f, 0.06f, 0.65f);
-	ImVec4 imvStaminaBordersColor = ImVec4(0.7f, 0.7f, 0.7f, 0.5f);
 	ImVec4 imvStaminaColorTop = ImVec4(0.65f, 1.00f, 0.35f, 0.9f);
 	ImVec4 imvStaminaColorBottom = ImVec4(0.3f, 0.65f, 0.1f, 0.9f);
 	ImVec4 imvStaminaColorExhaustedTop = ImVec4(0.95f, 0.65f, 0.35f, 0.9f);
@@ -106,8 +106,12 @@ public:
 	std::filesystem::path fontFileName = "Default";
 
 private:
+	bool _Load(bool bFirstLoad = false);
+	bool _Save();
 	std::vector<const int*> GetAllKeybinds() const;
 
 	std::filesystem::path configFilePath;
 	bool bConfigUpdated = false;
+	bool bNeedToLoad = false;
+	bool bNeedToSave = false;
 };

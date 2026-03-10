@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "config.h"
 #include "imgui_wrappers.h"
+#include "snap_window.h"
 #include "updater.h"
 #include "foregroundtracker.h"
 #include "version.h"
@@ -13,12 +14,14 @@
 #include "stamina.h"
 
 constexpr const ImGuiWindowFlags timer_window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse;
-constexpr const float top_ratio = 0.675f;
-constexpr const float bottom_ratio = 1.f - top_ratio;
 
-void CGui::Init()
+bool CGui::Init()
 {
 	this->fakeDrawList = new ImDrawList(ImGui::GetDrawListSharedData());
+    if (!this->fakeDrawList)
+        return false;
+
+    return true;
 }
 
 void CGui::Cleanup()
@@ -33,18 +36,21 @@ void CGui::OnFrameStart()
     this->ProcessFade();
 }
 
-//void PerformanceWindow()
-//{
-//    ImGui::Begin("Performance", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
-//    auto& io = ImGui::GetIO();
-//    ImGui::Text("FPS: %.0f", io.Framerate);
-//    ImGui::Text("Frame Time: %.2f ms", 1000.0f / io.Framerate);
-//    ImGui::End();
-//}
+void CGui::PerformanceWindow()
+{
+    if (!this->bShowPerformanceWindow)
+        return;
+
+    ImGui::Begin("Performance", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse);
+    auto& io = ImGui::GetIO();
+    ImGui::Text("FPS: %.0f", io.Framerate);
+    ImGui::Text("Frametme: %.2f ms", 1000.0f / io.Framerate);
+    ImGui::End();
+}
 
 void CGui::OnRender()
 {
-    //PerformanceWindow();
+    this->PerformanceWindow();
     this->UpdaterWindow();
     this->SettingsWindow();
     this->TimerWindows();
@@ -54,88 +60,19 @@ void CGui::OnRender()
 
 void CGui::TimerWindows()
 {
-    if (!CConfig::Get().bEnableSplitMode)
-    {
-        this->MainTimerWindow();
-    }
+    if (this->bAutoSmudgeTimer)
+        this->DrawTimerWindow("SmudgeTimerWindow", this->SmudgeTimerAuto.GetString(), this->SmudgeTimerAuto.GetColors(), CConfig::Get().flSmudgeTimerSize, CConfig::Get().imvSmudgeTimerWindowPos, true);
     else
-    {
-        if (this->bAutoSmudgeTimer)
-            this->DrawTimerWindow("SmudgeTimerWindow", this->SmudgeTimerAuto.GetString(), this->SmudgeTimerAuto.GetColors(), CConfig::Get().flSmudgeTimerSize, CConfig::Get().imvSmudgeTimerWindowPos, this->bAutoSmudgeTimer);
-        else
-            this->DrawTimerWindow("SmudgeTimerWindow", this->SmudgeTimerManual.GetString(), this->SmudgeTimerManual.GetColors(), CConfig::Get().flSmudgeTimerSize, CConfig::Get().imvSmudgeTimerWindowPos, this->bAutoSmudgeTimer);
+        this->DrawTimerWindow("SmudgeTimerWindow", this->SmudgeTimerManual.GetString(), this->SmudgeTimerManual.GetColors(), CConfig::Get().flSmudgeTimerSize, CConfig::Get().imvSmudgeTimerWindowPos, false);
 
-        if (CConfig::Get().bEnableSplitObambo)
-            this->DrawTimerWindow("ObamboTimerWindow", this->ObamboTimer.GetString(), this->ObamboTimer.GetColors(), CConfig::Get().flObamboTimerSize, CConfig::Get().imvObamboTimerWindowPos, false);
+    if (CConfig::Get().bEnableObamboTimer)
+        this->DrawTimerWindow("ObamboTimerWindow", this->ObamboTimer.GetString(), this->ObamboTimer.GetColors(), CConfig::Get().flObamboTimerSize, CConfig::Get().imvObamboTimerWindowPos, false);
 
-        if (CConfig::Get().bEnableSplitHunt)
-            this->DrawTimerWindow("HuntTimerWindow", this->HuntTimer.GetString(), this->HuntTimer.GetColors(), CConfig::Get().flHuntTimerSize, CConfig::Get().imvHuntTimerWindowPos, false);
+    if (CConfig::Get().bEnableHuntTimer)
+        this->DrawTimerWindow("HuntTimerWindow", this->HuntTimer.GetString(), this->HuntTimer.GetColors(), CConfig::Get().flHuntTimerSize, CConfig::Get().imvHuntTimerWindowPos, false);
 
-        if (CConfig::Get().bEnableSplitCandle)
-            this->DrawTimerWindow("CandleTimerWindow", this->CandleTimer.GetString(), this->CandleTimer.GetColors(), CConfig::Get().flCandleTimerSize, CConfig::Get().imvCandleTimerWindowPos, false);
-    }
-}
-
-void CGui::MainTimerWindow()
-{
-    const float flWidthScale = CFonts::Get().GetWindowWidthFactor() * 0.7f;
-    ImVec2 windowSize((CConfig::Get().flSize * flWidthScale), CConfig::Get().flSize);
-
-    ImGui::SetNextWindowSize(windowSize);
-    ImGui::SetNextWindowPos(CConfig::Get().imvTimerWindowPos, ImGuiCond_Once);
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, CConfig::Get().flRounding);
-
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, CConfig::Get().imvBackgroundColor);
-    ImGui::PushStyleColor(ImGuiCol_Border, CConfig::Get().imvBordersColor);
-    ImGui::PushStyleColor(ImGuiCol_Separator, CConfig::Get().imvBordersColor);
-
-    bool bOpened = ImGui::BeginSnap("MainTimerWindow", nullptr, timer_window_flags);
-    ImGui::PopStyleColor(3);
-    ImGui::PopStyleVar(2);
-
-    if (bOpened)
-    {
-        if (CConfig::Get().IsConfigUpdated())
-            ImGui::SetWindowPos(CConfig::Get().imvTimerWindowPos);
-        else
-            CConfig::Get().imvTimerWindowPos = ImGui::GetWindowPos();
-
-        if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-            ImGui::OpenPopup("TimerContextMenu");
-
-        if (ImGui::BeginPopup("TimerContextMenu"))
-        {
-            if (ImGui::MenuItem("Settings")) this->bShowSettings = true;
-            if (ImGui::MenuItem("About")) this->bShowAbout = true;
-            if (ImGui::MenuItem("Exit")) CRender::Get().bWantExit = true;
-            ImGui::EndPopup();
-        }
-
-        ImGui::SetCursorPos(ImVec2(0.0f, 0.0f));
-        if (this->bAutoSmudgeTimer)
-            this->DrawTimerSection("Main", this->SmudgeTimerAuto.GetString(), top_ratio, windowSize, this->SmudgeTimerAuto.GetColors(), true);
-        else
-            this->DrawTimerSection("Main", this->SmudgeTimerManual.GetString(), top_ratio, windowSize, this->SmudgeTimerManual.GetColors(), true);
-
-        const float bottom_y_start = windowSize.y * top_ratio;
-        ImVec2 sizeAvailableHalf(windowSize.x * 0.5f, windowSize.y);
-
-        ImGui::SetCursorPos(ImVec2(0.0f, bottom_y_start));
-        this->DrawTimerSection("Obambo", this->ObamboTimer.GetString(), bottom_ratio, sizeAvailableHalf, this->ObamboTimer.GetColors(), false);
-
-        ImGui::SetCursorPos(ImVec2(windowSize.x * 0.5f, bottom_y_start));
-        this->DrawTimerSection("Hunt", this->HuntTimer.GetString(), bottom_ratio, sizeAvailableHalf, this->HuntTimer.GetColors(), false);
-
-        float separator_y = std::floorf(CConfig::Get().imvTimerWindowPos.y + windowSize.y * top_ratio);
-        ImGui::GetWindowDrawList()->AddLine(ImVec2(CConfig::Get().imvTimerWindowPos.x, separator_y), ImVec2(CConfig::Get().imvTimerWindowPos.x + windowSize.x, separator_y), ImGui::GetColorU32(ImGuiCol_Separator), 1.0f);
-
-        float separator_x = std::floorf(CConfig::Get().imvTimerWindowPos.x + windowSize.x * 0.5f);
-        ImGui::GetWindowDrawList()->AddLine(ImVec2(separator_x, separator_y), ImVec2(separator_x, CConfig::Get().imvTimerWindowPos.y + windowSize.y), ImGui::GetColorU32(ImGuiCol_Separator), 1.0f);
-    }
-
-    ImGui::End();
+    if (CConfig::Get().bEnableCandleTimer)
+        this->DrawTimerWindow("CandleTimerWindow", this->CandleTimer.GetString(), this->CandleTimer.GetColors(), CConfig::Get().flCandleTimerSize, CConfig::Get().imvCandleTimerWindowPos, false);
 }
 
 void CGui::SettingsWindow()
@@ -144,7 +81,7 @@ void CGui::SettingsWindow()
         return;
 
     const auto& Style = ImGui::GetStyle();
-    const ImVec2 window_size(640 * Style.FontScaleDpi, 360 * Style.FontScaleDpi);
+    const ImVec2 window_size(640.f * Style.FontScaleDpi, 360.f * Style.FontScaleDpi);
     ImGui::SetNextWindowSize(window_size, ImGuiCond_Always);
     ImGuiIO& io = ImGui::GetIO();
     ImVec2 center((io.DisplaySize.x - window_size.x) * 0.5f, (io.DisplaySize.y - window_size.y) * 0.5f);
@@ -167,7 +104,7 @@ void CGui::SettingsWindow()
                     ImGui::TableSetColumnIndex(0);
 
                     ImGui::SeparatorText("Game Binds");
-                    this->KeyBindButton("Touch", &CConfig::Get().vkTouchBind);
+                    this->KeyBindButton("Interact", &CConfig::Get().vkInteractBind);
                     this->KeyBindButton("Use", &CConfig::Get().vkUseBind);
                     ImGui::SetItemTooltip("WARNING: The \"Use\" bind in game\nshould be the save as the \"Use Hold\"!");
                     this->KeyBindButton("Sprint", &CConfig::Get().vkSprintBind);
@@ -219,16 +156,44 @@ void CGui::SettingsWindow()
 
                     ImGui::TableSetColumnIndex(0);
 
-                    if (!CConfig::Get().bEnableSplitMode)
-                    {
-                        ImGui::SeparatorText("Timer Window");
-                        ImGui::PushItemWidth(215.f * Style.FontScaleDpi);
-                        ImGui::SliderFloat("Size", &CConfig::Get().flSize, 30.f, 500.f);
-                        ImGui::SliderFloat("Rounding", &CConfig::Get().flRounding, 0.f, 20.f);
-                        ImGui::PopItemWidth();
-                    }
+                    float flWdth = 230.f * Style.FontScaleDpi;
 
-                    ImGui::SeparatorText("Timer Settings");
+                    ImGui::SeparatorText("Timers");
+                    ImGui::PushItemWidth(flWdth);
+                    ImGui::SliderFloat("##SmudgeTimerSize", &CConfig::Get().flSmudgeTimerSize, 17.f, 150.f);
+                    ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
+                    ImGui::SameLine();
+                    bool bSmudge = true;
+                    if (ImGui::Checkbox("Smudge", &bSmudge)) bSmudge = true;
+                    ImGui::SetItemTooltip("Can't be disabled!");
+                    
+                    ImGui::SliderFloat("##ObamboTimerSize", &CConfig::Get().flObamboTimerSize, 17.f, 150.f);
+                    ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
+                    ImGui::SameLine();
+                    ImGui::Checkbox("Obambo", &CConfig::Get().bEnableObamboTimer);
+
+                    ImGui::SliderFloat("##HuntTimerSize", &CConfig::Get().flHuntTimerSize, 17.f, 150.f);
+                    ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
+                    ImGui::SameLine();
+                    ImGui::Checkbox("Hunt", &CConfig::Get().bEnableHuntTimer);
+
+                    ImGui::SliderFloat("##CandleTimerSize", &CConfig::Get().flCandleTimerSize, 17.f, 150.f);
+                    ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
+                    ImGui::SameLine();
+                    ImGui::Checkbox("Candle", &CConfig::Get().bEnableCandleTimer);    
+                    ImGui::PopItemWidth();
+
+                    ImGui::SeparatorText("Timers Windows Rounding");
+                    ImGui::PushItemWidth(flWdth);
+                    ImGui::SliderFloat("Rounding", &CConfig::Get().flRounding, 0.f, 20.f);
+                    ImGui::PopItemWidth();
+
+                    ImGui::SeparatorText("Timers Windows Borders");
+                    ImGui::Checkbox("Enable Borders", &CConfig::Get().bEnableBorders);
+
+                    ImGui::TableSetColumnIndex(1);
+
+                    ImGui::SeparatorText("Timers Settings");
                     ImGui::PushItemWidth(145.f * Style.FontScaleDpi);
                     ImGui::InputScalar("Smudge Timer Start Value", ImGuiDataType_S64, &CConfig::Get().iStartSmudgeTimerAt);
                     ImGui::SetItemTooltip("Initial timer value in milliseconds");
@@ -240,8 +205,29 @@ void CGui::SettingsWindow()
                     ImGui::SetItemTooltip("Maximum timer value in milliseconds");
                     ImGui::PopItemWidth();
 
-                    ImGui::SeparatorText("Misc");
-                    ImGui::Checkbox("Check Active Window", &CConfig::Get().bCheckActiveWindow);
+                    ImGui::SeparatorText("Timers Windows Snapping");
+                    ImGui::PushItemWidth(200.f * Style.FontScaleDpi);
+                    ImGui::SliderFloat("Snapping Distance", &CConfig::Get().flSnappingDistance, 2.f, 20.f, "%.0f", ImGuiSliderFlags_ClampOnInput);
+                    ImGui::PopItemWidth();
+
+                    ImGui::EndTable();
+                }
+
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Misc"))
+            {
+                if (ImGui::BeginTable("MiscTable", 2, ImGuiTableFlags_None))
+                {
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::SeparatorText("Updates");
+                    ImGui::Checkbox("Check For Updates", &CConfig::Get().bCheckUpdates);
+
+                    ImGui::SeparatorText("Foreground Tracking");
+                    ImGui::Checkbox("Check Foreground Window", &CConfig::Get().bCheckActiveWindow);
                     ImGui::SetItemTooltip("When the game window is inactive all binds will\nbe ignored and the global alpha will be lowered");
                     if (CConfig::Get().bCheckActiveWindow)
                     {
@@ -255,8 +241,17 @@ void CGui::SettingsWindow()
 
                     ImGui::TableSetColumnIndex(1);
 
-                    ImGui::SeparatorText("Update");
-                    ImGui::Checkbox("Check For Updates", &CConfig::Get().bCheckUpdates);
+                    ImGui::SeparatorText("Frame Sync Method");
+                    const char* items[] = { "Sync with DWM", "VSync (short render queue)", "VSync", "Disable"};
+                    ImGui::PushItemWidth(225.f * Style.FontScaleDpi);
+                    if (ImGui::Combo("Sync Method", &CConfig::Get().iSyncMethod, items, IM_ARRAYSIZE(items)))
+                        CRender::Get().Reset();
+                    ImGui::SetItemTooltip("DWM Sync: lowest latency but less stable frametime.\nThis method is recommended by default.\n\nVSync (short render queue): a bit higher latency, a\nbit more stable frametime.\n\nVSync: high latency but more stable frametime.\nUse it if you have issues with other methods.\n\nDisable: completely disables any kind of sync.\nNOT RECOMMENDED! FPS will become unlimited,\nso you should limit it yourself, otherwise you will get\n100%% CPU core load.");
+                    ImGui::PopItemWidth();
+
+                    ImGui::SeparatorText("Diagnostic");
+                    ImGui::Checkbox("Show Overlay FPS And Frametime", &this->bShowPerformanceWindow);
+                    ImGui::SetItemTooltip("For diagnostic purposes only!\nThis setting is not saved.");
 
                     ImGui::EndTable();
                 }
@@ -264,54 +259,7 @@ void CGui::SettingsWindow()
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Split Mode"))
-            {
-                if (ImGui::BeginTable("SplitModeTable", 2, ImGuiTableFlags_None))
-                {
-                    ImGui::TableSetupColumn("Settings", ImGuiTableColumnFlags_WidthFixed, 150.0f * Style.FontScaleDpi);
-                    ImGui::TableSetupColumn("Sliders", ImGuiTableColumnFlags_WidthStretch);
-
-                    ImGui::TableNextRow();
-
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::SeparatorText("Split Mode");
-                    ImGui::Checkbox("Enable Split Mode", &CConfig::Get().bEnableSplitMode);
-                    if (CConfig::Get().bEnableSplitMode)
-                    {
-                        ImGui::Checkbox("Enable Obambo Timer", &CConfig::Get().bEnableSplitObambo);
-                        ImGui::Checkbox("Enable Hunt Timer", &CConfig::Get().bEnableSplitHunt);
-                        ImGui::Checkbox("Enable Candle Timer", &CConfig::Get().bEnableSplitCandle);
-                    }
-
-                    ImGui::TableSetColumnIndex(1);
-                    if (CConfig::Get().bEnableSplitMode)
-                    {
-                        ImGui::SeparatorText("Timer Window Size");
-
-                        ImGui::PushItemWidth(-FLT_MIN);
-
-                        ImGui::SliderFloat("##SmudgeTimerSize", &CConfig::Get().flSmudgeTimerSize, 20.f, 300.f);
-                        ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
-
-                        ImGui::SliderFloat("##ObamboTimerSize", &CConfig::Get().flObamboTimerSize, 20.f, 300.f);
-                        ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
-
-                        ImGui::SliderFloat("##HuntTimerSize", &CConfig::Get().flHuntTimerSize, 20.f, 300.f);
-                        ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
-
-                        ImGui::SliderFloat("##CandleTimerSize", &CConfig::Get().flCandleTimerSize, 20.f, 300.f);
-                        ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
-
-                        ImGui::PopItemWidth();
-                    }
-
-                    ImGui::EndTable();
-                }
-
-                ImGui::EndTabItem();
-            }
-
-            if (ImGui::BeginTabItem("Font"))
+            if (ImGui::BeginTabItem("Fonts"))
             {
                 if (ImGui::BeginTable("FontTable", 2, ImGuiTableFlags_None))
                 {
@@ -376,37 +324,38 @@ void CGui::SettingsWindow()
                     ImGui::SeparatorText("Timer Window##timer_window_colors");
 
                     ImGui::ColorEdit4("Background", reinterpret_cast<float*>(&CConfig::Get().imvBackgroundColor), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Borders", reinterpret_cast<float*>(&CConfig::Get().imvBordersColor), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Border", reinterpret_cast<float*>(&CConfig::Get().imvBorderColor), ImGuiColorEditFlags_NoInputs);
+                    ImGui::SetItemTooltip("Borders can be disabled in \"Main\" tab");
 
                     ImGui::SeparatorText("Smudge Timer##smudge_colors");
 
-                    ImGui::ColorEdit4("Glow 1 Layer", reinterpret_cast<float*>(&CConfig::Get().imvGlowColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Glow 2 Layer", reinterpret_cast<float*>(&CConfig::Get().imvGlowColor2), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Safe Time Top", reinterpret_cast<float*>(&CConfig::Get().imvSafeTimeColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Safe Time Bottom", reinterpret_cast<float*>(&CConfig::Get().imvSafeTimeColor2), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Demon Time Top", reinterpret_cast<float*>(&CConfig::Get().imvDemonTimeColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Demon Time Bottom", reinterpret_cast<float*>(&CConfig::Get().imvDemonTimeColor2), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Hunt Time Top", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimeColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Hunt Time Bottom", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimeColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Glow 1 Layer", reinterpret_cast<float*>(&CConfig::Get().imvGlowColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Glow 2 Layer", reinterpret_cast<float*>(&CConfig::Get().imvGlowColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Safe Time Top", reinterpret_cast<float*>(&CConfig::Get().imvSafeTimeColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Safe Time Bottom", reinterpret_cast<float*>(&CConfig::Get().imvSafeTimeColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Demon Time Top", reinterpret_cast<float*>(&CConfig::Get().imvDemonTimeColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Demon Time Bottom", reinterpret_cast<float*>(&CConfig::Get().imvDemonTimeColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Hunt Time Top", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimeColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Hunt Time Bottom", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimeColor2), ImGuiColorEditFlags_NoInputs);
 
                     ImGui::TableSetColumnIndex(1);
 
                     ImGui::SeparatorText("Hunt Timer##hunt_timer_colors");
 
-                    ImGui::ColorEdit4("Hunt Timer Top", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimerColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Hunt Timer Bottom", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimerColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Hunt Timer Top", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimerColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Hunt Timer Bottom", reinterpret_cast<float*>(&CConfig::Get().imvHuntTimerColor2), ImGuiColorEditFlags_NoInputs);
 
                     ImGui::SeparatorText("Obambo Timer##obambo_timer_colors");
 
-                    ImGui::ColorEdit4("Obambo Calm Top", reinterpret_cast<float*>(&CConfig::Get().imvObamboCalmColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Obambo Calm Bottom", reinterpret_cast<float*>(&CConfig::Get().imvObamboCalmColor2), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Obambo Aggressive Top", reinterpret_cast<float*>(&CConfig::Get().imvObamboAggressiveColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Obambo Aggressive Bottom", reinterpret_cast<float*>(&CConfig::Get().imvObamboAggressiveColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Obambo Calm Top", reinterpret_cast<float*>(&CConfig::Get().imvObamboCalmColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Obambo Calm Bottom", reinterpret_cast<float*>(&CConfig::Get().imvObamboCalmColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Obambo Aggressive Top", reinterpret_cast<float*>(&CConfig::Get().imvObamboAggressiveColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Obambo Aggressive Bottom", reinterpret_cast<float*>(&CConfig::Get().imvObamboAggressiveColor2), ImGuiColorEditFlags_NoInputs);
 
                     ImGui::SeparatorText("Candle Timer##candle_timer_colors");
 
-                    ImGui::ColorEdit4("Candle Timer Top", reinterpret_cast<float*>(&CConfig::Get().imvCandleTimerColor1), ImGuiColorEditFlags_NoInputs);
-                    ImGui::ColorEdit4("Candle Timer Bottom", reinterpret_cast<float*>(&CConfig::Get().imvCandleTimerColor2), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Candle Timer Top", reinterpret_cast<float*>(&CConfig::Get().imvCandleTimerColor1), ImGuiColorEditFlags_NoInputs);
+                    ImGui::ColorEdit3("Candle Timer Bottom", reinterpret_cast<float*>(&CConfig::Get().imvCandleTimerColor2), ImGuiColorEditFlags_NoInputs);
 
                     ImGui::EndTable();
                 }
@@ -429,11 +378,12 @@ void CGui::SettingsWindow()
                     {
                         ImGui::SeparatorText("Stamina Bar Size");
                         ImGui::PushItemWidth(215.f * Style.FontScaleDpi);
-                        ImGui::SliderFloat("Width", &CConfig::Get().imvStaminaBarSize.x, 30.f, 1000.f, "%.0f");
-                        ImGui::SliderFloat("Height", &CConfig::Get().imvStaminaBarSize.y, 15.f, 100.f, "%.0f");
+                        ImGui::SliderFloat("Width", &CConfig::Get().imvStaminaBarSize.x, 30.f, 800.f, "%.0f");
+                        ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
+                        ImGui::SliderFloat("Height", &CConfig::Get().imvStaminaBarSize.y, 15.f, 80.f, "%.0f");
+                        ImGui::SetItemTooltip("Ctrl+click to enter the exact value");
                         ImGui::SliderFloat("Padding", &CConfig::Get().flStaminaBarPadding, 0.f, 15.f, "%.0f");
-                        ImGui::SliderFloat("Rounding", &CConfig::Get().flStaminaBarRounding, 0.f, 12.f, "%.0f");
-                        ImGui::SliderFloat("Fill Rounding", &CConfig::Get().flStaminaBarFillRounding, 0.f, 12.f, "%.0f");
+                        ImGui::SliderFloat("Fill Rounding", &CConfig::Get().flStaminaBarFillRounding, 0.f, 12.f, "%.3f");
                         ImGui::PopItemWidth();
 
                         ImGui::SeparatorText("Misc");
@@ -443,8 +393,6 @@ void CGui::SettingsWindow()
                         ImGui::TableSetColumnIndex(1);
 
                         ImGui::SeparatorText("Stamina Bar Colors##stamina_bar_colors");
-                        ImGui::ColorEdit4("Background", reinterpret_cast<float*>(&CConfig::Get().imvStaminaBackgroundColor), ImGuiColorEditFlags_NoInputs);
-                        ImGui::ColorEdit4("Borders", reinterpret_cast<float*>(&CConfig::Get().imvStaminaBordersColor), ImGuiColorEditFlags_NoInputs);
 						ImGui::ColorEdit4("Fill Top", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorTop), ImGuiColorEditFlags_NoInputs);
                         ImGui::ColorEdit4("Fill Bottom", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorBottom), ImGuiColorEditFlags_NoInputs);
                         ImGui::ColorEdit4("Fill Exhausted Top", reinterpret_cast<float*>(&CConfig::Get().imvStaminaColorExhaustedTop), ImGuiColorEditFlags_NoInputs);
@@ -480,7 +428,7 @@ void CGui::AboutWindow()
     if (this->bShowAbout)
     {
         const auto& Style = ImGui::GetStyle();
-        const ImVec2 windowSize(300 * Style.FontScaleDpi, 165 * Style.FontScaleDpi);
+        const ImVec2 windowSize(300.f * Style.FontScaleDpi, 165.f * Style.FontScaleDpi);
         ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
 
         if (this->bShowAbout != bPrevShow)
@@ -554,7 +502,7 @@ void CGui::UpdaterWindow()
     if (bShowUpdate)
     {
         const auto& Style = ImGui::GetStyle();
-        const ImVec2 windowSize(300 * Style.FontScaleDpi, 125 * Style.FontScaleDpi);
+        const ImVec2 windowSize(300.f * Style.FontScaleDpi, 125.f * Style.FontScaleDpi);
         ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
 
         if (bShowUpdate != bPrevShow)
@@ -676,40 +624,17 @@ bool CGui::KeyBindButton(const char* label, int* vk_key)
 
 void CGui::DrawTimerWindow(const char* window_name, const char* time_value, const ImVec4* colors, float flSize, ImVec2& imvPos, bool bGlow)
 {
-    ImVec2 windowSize((flSize * CFonts::Get().GetWindowWidthFactor()), flSize);
+    ImVec2 windowSize(flSize * CFonts::Get().GetWindowWidthFactor(), flSize);
 
     ImGui::SetNextWindowSize(windowSize);
-    ImGui::SetNextWindowPos(imvPos, ImGuiCond_Once);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
-
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, CConfig::Get().imvBackgroundColor);
-
-    bool bOpened = ImGui::BeginSnap(window_name, nullptr, timer_window_flags);
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar(3);
+    bool bOpened = CSnapWindow::Get().Begin(window_name, imvPos, nullptr, timer_window_flags);
 
     if (bOpened)
     {
-        if (CConfig::Get().IsConfigUpdated())
-            ImGui::SetWindowPos(imvPos);
-        else
-            imvPos = ImGui::GetWindowPos();
+		windowSize = ImGui::GetWindowSize();
 
-        if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-            ImGui::OpenPopup("TimerContextMenu");
-
-        if (ImGui::BeginPopup("TimerContextMenu"))
-        {
-            if (ImGui::MenuItem("Settings")) this->bShowSettings = true;
-            if (ImGui::MenuItem("About")) this->bShowAbout = true;
-            if (ImGui::MenuItem("Exit")) CRender::Get().bWantExit = true;
-            ImGui::EndPopup();
-        }
-
-        float size = windowSize.y * CFonts::Get().GetFontScaleFactor();
+        float size = std::roundf(windowSize.y * CFonts::Get().GetFontScaleFactor());
         ImDrawList* draw = ImGui::GetWindowDrawList();
 		const ImGuiIO& io = ImGui::GetIO();
 		ImFont* font = io.Fonts->Fonts[1];
@@ -738,18 +663,16 @@ void CGui::DrawTimerWindow(const char* window_name, const char* time_value, cons
     ImGui::End();
 }
 
-void CGui::DrawTimerSection(const char* window_name, const char* time_value, float height_ratio, const ImVec2& available_size, const ImVec4* colors, bool bMain)
+void CGui::DrawTimerSection(const char* window_name, const char* time_value, ImVec2 windowSize, const ImVec4* colors, bool bGlow)
 {
-    float section_height = available_size.y * height_ratio;
-    ImVec2 windowSize(available_size.x, section_height);
-
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     bool bOpened = ImGui::BeginChild(window_name, windowSize, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground);
     ImGui::PopStyleVar();
 
     if (bOpened)
     {
-        float size = windowSize.y * CFonts::Get().GetFontScaleFactor();
+		windowSize = ImGui::GetWindowSize();
+        float size = std::roundf(windowSize.y * CFonts::Get().GetFontScaleFactor());
         ImDrawList* draw = ImGui::GetWindowDrawList();
         const ImGuiIO& io = ImGui::GetIO();
         ImFont* font = io.Fonts->Fonts[1];
@@ -757,7 +680,7 @@ void CGui::DrawTimerSection(const char* window_name, const char* time_value, flo
         const ImVec2 imvPos = ImGui::GetWindowPos();
         const ImVec2 delta = this->CalculateTextCenterDelta(font, time_value, size, imvPos, windowSize);
 
-        if (bMain && this->bAutoSmudgeTimer)
+        if (bGlow)
         {
             const ImVec4 glow_color1(CConfig::Get().imvGlowColor1.x, CConfig::Get().imvGlowColor1.y, CConfig::Get().imvGlowColor1.z, CConfig::Get().imvGlowColor1.w * Style.Alpha);
             const ImVec4 glow_color2(CConfig::Get().imvGlowColor2.x, CConfig::Get().imvGlowColor2.y, CConfig::Get().imvGlowColor2.z, CConfig::Get().imvGlowColor2.w * Style.Alpha);
@@ -894,12 +817,12 @@ ImVec2 CGui::CalculateTextCenterDelta(ImFont* font, const char* text, float size
 
 void CGui::ApplyTextCenterDelta(int vtx_start, int vtx_end, const ImVec2& delta, ImDrawList* draw)
 {
-	ImVec2 rounded_delta(std::roundf(delta.x), std::roundf(delta.y));
+	ImVec2 truncated_delta(std::truncf(delta.x), std::truncf(delta.y));
 
     for (int i = vtx_start; i < vtx_end; i++)
     {
-        draw->VtxBuffer[i].pos.x += rounded_delta.x;
-        draw->VtxBuffer[i].pos.y += rounded_delta.y;
+        draw->VtxBuffer[i].pos.x += truncated_delta.x;
+        draw->VtxBuffer[i].pos.y += truncated_delta.y;
     }
 }
 
@@ -932,7 +855,7 @@ void CGui::UpdateTimers()
         const auto& SmudgeTimerSwitchKey = CInput::Get().GetKeyData(CConfig::Get().vkSwitchSmudgeTimerModeBind);
         const auto& HuntTimerKey = CInput::Get().GetKeyData(CConfig::Get().vkHuntTimerBind);
         const auto& CandleTimerKey = CInput::Get().GetKeyData(CConfig::Get().vkCandleTimerBind);
-        const auto& TouchKey = CInput::Get().GetKeyData(CConfig::Get().vkTouchBind);
+        const auto& InteractKey = CInput::Get().GetKeyData(CConfig::Get().vkInteractBind);
         const auto& UseKey = CInput::Get().GetKeyData(CConfig::Get().vkUseBind);
         const auto& FullResetKey = CInput::Get().GetKeyData(CConfig::Get().vkFullResetBind);
         const auto& ResetKey = CInput::Get().GetKeyData(CConfig::Get().vkResetBind);
@@ -953,6 +876,9 @@ void CGui::UpdateTimers()
                 this->SmudgeTimerAuto.Reset();
             }
 
+            if (InteractKey.bWasPressedThisFrame || InteractKey.bIsDown)
+                this->ObamboTimer.Reset();
+
             if (HuntTimerKey.bWasPressedThisFrame || HuntTimerKey.bIsDown)
                 this->HuntTimer.Reset();
 
@@ -970,14 +896,14 @@ void CGui::UpdateTimers()
             if (SmudgeTimerSwitchKey.bWasPressedThisFrame)
                 this->bAutoSmudgeTimer = !this->bAutoSmudgeTimer;
 
+            if (InteractKey.bWasPressedThisFrame)
+                this->ObamboTimer.Set(InteractKey.tLastPressTime);
+
             if (HuntTimerKey.bWasPressedThisFrame)
                 this->HuntTimer.Set(HuntTimerKey.tLastPressTime);
 
             if (CandleTimerKey.bWasPressedThisFrame)
-                this->CandleTimer.Set(UseKey.tUseRegTime);
-
-            if (TouchKey.bWasPressedThisFrame)
-                this->ObamboTimer.Set(TouchKey.tLastPressTime);
+				this->CandleTimer.Set(UseKey.tUseRegTime);
         }
     }
 

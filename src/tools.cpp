@@ -53,6 +53,12 @@ ImVec4 CTools::Lerp(const ImVec4& a, const ImVec4& b, float t)
     return ImVec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
 }
 
+float CTools::toEven(float flValue)
+{
+    int i = static_cast<int>(flValue);
+    return static_cast<float>(i + (i & 1));
+}
+
 const char* CTools::GetKeyNameVK(int vk)
 {
     static char keyName[128];

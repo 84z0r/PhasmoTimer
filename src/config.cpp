@@ -4,9 +4,9 @@
 #include "rapidjson/stringbuffer.h"
 #include "tools.h"
 #include "render.h"
-#include <vector>
+#include "snap_window.h"
 
-CConfig::CConfig()
+void CConfig::Init()
 {
     wchar_t exe_path_buf[MAX_PATH];
     if (GetModuleFileNameW(nullptr, exe_path_buf, MAX_PATH))
@@ -16,9 +16,11 @@ CConfig::CConfig()
         this->configFilePath = std::filesystem::current_path();
 
     this->configFilePath /= "config.json";
+
+    this->_Load(true);
 }
 
-bool CConfig::Load(bool bFirstLoad)
+bool CConfig::_Load(bool bFirstLoad)
 {
     FILE* file = nullptr;
     errno_t err = _wfopen_s(&file, this->configFilePath.c_str(), L"rb");
@@ -64,10 +66,10 @@ bool CConfig::Load(bool bFirstLoad)
 
     if (doc.HasMember("bCheckActiveWindow") && doc["bCheckActiveWindow"].IsBool()) this->bCheckActiveWindow = doc["bCheckActiveWindow"].GetBool();
     if (doc.HasMember("bCheckUpdates") && doc["bCheckUpdates"].IsBool()) this->bCheckUpdates = doc["bCheckUpdates"].GetBool();
-    if (doc.HasMember("bEnableSplitMode") && doc["bEnableSplitMode"].IsBool()) this->bEnableSplitMode = doc["bEnableSplitMode"].GetBool();
-    if (doc.HasMember("bEnableSplitObambo") && doc["bEnableSplitObambo"].IsBool()) this->bEnableSplitObambo = doc["bEnableSplitObambo"].GetBool();
-    if (doc.HasMember("bEnableSplitHunt") && doc["bEnableSplitHunt"].IsBool()) this->bEnableSplitHunt = doc["bEnableSplitHunt"].GetBool();
-    if (doc.HasMember("bEnableSplitCandle") && doc["bEnableSplitCandle"].IsBool()) this->bEnableSplitCandle = doc["bEnableSplitCandle"].GetBool();
+    if (doc.HasMember("bEnableObamboTimer") && doc["bEnableObamboTimer"].IsBool()) this->bEnableObamboTimer = doc["bEnableObamboTimer"].GetBool();
+    if (doc.HasMember("bEnableHuntTimer") && doc["bEnableHuntTimer"].IsBool()) this->bEnableHuntTimer = doc["bEnableHuntTimer"].GetBool();
+    if (doc.HasMember("bEnableCandleTimer") && doc["bEnableCandleTimer"].IsBool()) this->bEnableCandleTimer = doc["bEnableCandleTimer"].GetBool();
+    if (doc.HasMember("bEnableBorders") && doc["bEnableBorders"].IsBool()) this->bEnableBorders = doc["bEnableBorders"].GetBool();
     if (doc.HasMember("bScanSystemFonts") && doc["bScanSystemFonts"].IsBool()) this->bScanSystemFonts = doc["bScanSystemFonts"].GetBool();
     if (doc.HasMember("bScanUserFonts") && doc["bScanUserFonts"].IsBool()) this->bScanUserFonts = doc["bScanUserFonts"].GetBool();
     if (doc.HasMember("bScanAppFonts") && doc["bScanAppFonts"].IsBool()) this->bScanAppFonts = doc["bScanAppFonts"].GetBool();
@@ -81,7 +83,7 @@ bool CConfig::Load(bool bFirstLoad)
     if (doc.HasMember("vkCandleTimerBind") && doc["vkCandleTimerBind"].IsInt()) this->vkCandleTimerBind = doc["vkCandleTimerBind"].GetInt();
     if (doc.HasMember("vkFullResetBind") && doc["vkFullResetBind"].IsInt()) this->vkFullResetBind = doc["vkFullResetBind"].GetInt();
     if (doc.HasMember("vkResetBind") && doc["vkResetBind"].IsInt()) this->vkResetBind = doc["vkResetBind"].GetInt();
-    if (doc.HasMember("vkTouchBind") && doc["vkTouchBind"].IsInt()) this->vkTouchBind = doc["vkTouchBind"].GetInt();
+    if (doc.HasMember("vkInteractBind") && doc["vkInteractBind"].IsInt()) this->vkInteractBind = doc["vkInteractBind"].GetInt();
     if (doc.HasMember("vkUseBind") && doc["vkUseBind"].IsInt()) this->vkUseBind = doc["vkUseBind"].GetInt();
     if (doc.HasMember("vkSprintBind") && doc["vkSprintBind"].IsInt()) this->vkSprintBind = doc["vkSprintBind"].GetInt();
     if (doc.HasMember("vkForwardBind") && doc["vkForwardBind"].IsInt()) this->vkForwardBind = doc["vkForwardBind"].GetInt();
@@ -89,19 +91,21 @@ bool CConfig::Load(bool bFirstLoad)
     if (doc.HasMember("vkLeftBind") && doc["vkLeftBind"].IsInt()) this->vkLeftBind = doc["vkLeftBind"].GetInt();
     if (doc.HasMember("vkRightBind") && doc["vkRightBind"].IsInt()) this->vkRightBind = doc["vkRightBind"].GetInt();
 
+    if (doc.HasMember("iSyncMethod") && doc["iSyncMethod"].IsInt()) this->iSyncMethod = std::clamp(doc["iSyncMethod"].GetInt(), 0, 2);
+
     if (doc.HasMember("iStartSmudgeTimerAt") && doc["iStartSmudgeTimerAt"].IsInt64()) this->iStartSmudgeTimerAt = doc["iStartSmudgeTimerAt"].GetInt64();
     if (doc.HasMember("iStartHuntTimerAt") && doc["iStartHuntTimerAt"].IsInt64()) this->iStartHuntTimerAt = doc["iStartHuntTimerAt"].GetInt64();
     if (doc.HasMember("iMaxMsSmudge") && doc["iMaxMsSmudge"].IsInt64()) this->iMaxMsSmudge = doc["iMaxMsSmudge"].GetInt64();
     if (doc.HasMember("iMaxMsHunt") && doc["iMaxMsHunt"].IsInt64()) this->iMaxMsHunt = doc["iMaxMsHunt"].GetInt64();
 
     if (doc.HasMember("flSize") && doc["flSize"].IsFloat()) this->flSize = doc["flSize"].GetFloat();
+    if (doc.HasMember("flSnappingDistance") && doc["flSnappingDistance"].IsFloat()) this->flSnappingDistance = std::clamp(doc["flSnappingDistance"].GetFloat(), 2.f, 20.f);
     if (doc.HasMember("flSmudgeTimerSize") && doc["flSmudgeTimerSize"].IsFloat()) this->flSmudgeTimerSize = doc["flSmudgeTimerSize"].GetFloat();
     if (doc.HasMember("flObamboTimerSize") && doc["flObamboTimerSize"].IsFloat()) this->flObamboTimerSize = doc["flObamboTimerSize"].GetFloat();
     if (doc.HasMember("flHuntTimerSize") && doc["flHuntTimerSize"].IsFloat()) this->flHuntTimerSize = doc["flHuntTimerSize"].GetFloat();
     if (doc.HasMember("flCandleTimerSize") && doc["flCandleTimerSize"].IsFloat()) this->flCandleTimerSize = doc["flCandleTimerSize"].GetFloat();
     if (doc.HasMember("flRounding") && doc["flRounding"].IsFloat()) this->flRounding = doc["flRounding"].GetFloat();
     if (doc.HasMember("flInactiveAlpha") && doc["flInactiveAlpha"].IsFloat()) this->flInactiveAlpha = doc["flInactiveAlpha"].GetFloat();
-    if (doc.HasMember("flStaminaBarRounding") && doc["flStaminaBarRounding"].IsFloat()) this->flStaminaBarRounding = doc["flStaminaBarRounding"].GetFloat();
     if (doc.HasMember("flStaminaBarFillRounding") && doc["flStaminaBarFillRounding"].IsFloat()) this->flStaminaBarFillRounding = doc["flStaminaBarFillRounding"].GetFloat();
     if (doc.HasMember("flStaminaBarPadding") && doc["flStaminaBarPadding"].IsFloat()) this->flStaminaBarPadding = doc["flStaminaBarPadding"].GetFloat();
 
@@ -114,7 +118,6 @@ bool CConfig::Load(bool bFirstLoad)
             }
         };
 
-    LoadImVec2("imvTimerWindowPos", this->imvTimerWindowPos);
     LoadImVec2("imvSmudgeTimerWindowPos", this->imvSmudgeTimerWindowPos);
     LoadImVec2("imvObamboTimerWindowPos", this->imvObamboTimerWindowPos);
     LoadImVec2("imvHuntTimerWindowPos", this->imvHuntTimerWindowPos);
@@ -135,7 +138,7 @@ bool CConfig::Load(bool bFirstLoad)
         };
 
     LoadImVec4("imvBackgroundColor", this->imvBackgroundColor);
-    LoadImVec4("imvBordersColor", this->imvBordersColor);
+    LoadImVec4("imvBorderColor", this->imvBorderColor);
     LoadImVec4("imvGlowColor1", this->imvGlowColor1);
     LoadImVec4("imvGlowColor2", this->imvGlowColor2);
 
@@ -157,8 +160,6 @@ bool CConfig::Load(bool bFirstLoad)
     LoadImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
     LoadImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
 
-    LoadImVec4("imvStaminaBackgroundColor", this->imvStaminaBackgroundColor);
-    LoadImVec4("imvStaminaBordersColor", this->imvStaminaBordersColor);
     LoadImVec4("imvStaminaColorTop", this->imvStaminaColorTop);
     LoadImVec4("imvStaminaColorBottom", this->imvStaminaColorBottom);
     LoadImVec4("imvStaminaColorExhaustedTop", this->imvStaminaColorExhaustedTop);
@@ -170,12 +171,14 @@ bool CConfig::Load(bool bFirstLoad)
 
     if (doc.HasMember("fontFileName") && doc["fontFileName"].IsString())
         this->fontFileName = doc["fontFileName"].GetString();
+    
+    CSnapWindow::Get().LoadGroups(doc);
 
     this->bConfigUpdated = !bFirstLoad;
     return true;
 }
 
-bool CConfig::Save()
+bool CConfig::_Save()
 {
     rapidjson::Document doc;
     doc.SetObject();
@@ -184,10 +187,9 @@ bool CConfig::Save()
 
     doc.AddMember("bCheckActiveWindow", this->bCheckActiveWindow, alloc);
     doc.AddMember("bCheckUpdates", this->bCheckUpdates, alloc);
-    doc.AddMember("bEnableSplitMode", this->bEnableSplitMode, alloc);
-    doc.AddMember("bEnableSplitObambo", this->bEnableSplitObambo, alloc);
-    doc.AddMember("bEnableSplitHunt", this->bEnableSplitHunt, alloc);
-    doc.AddMember("bEnableSplitCandle", this->bEnableSplitCandle, alloc);
+    doc.AddMember("bEnableObamboTimer", this->bEnableObamboTimer, alloc);
+    doc.AddMember("bEnableHuntTimer", this->bEnableHuntTimer, alloc);
+    doc.AddMember("bEnableCandleTimer", this->bEnableCandleTimer, alloc);
     doc.AddMember("bScanSystemFonts", this->bScanSystemFonts, alloc);
     doc.AddMember("bScanUserFonts", this->bScanUserFonts, alloc);
     doc.AddMember("bScanAppFonts", this->bScanAppFonts, alloc);
@@ -201,7 +203,7 @@ bool CConfig::Save()
     doc.AddMember("vkCandleTimerBind", this->vkCandleTimerBind, alloc);
     doc.AddMember("vkFullResetBind", this->vkFullResetBind, alloc);
     doc.AddMember("vkResetBind", this->vkResetBind, alloc);
-    doc.AddMember("vkTouchBind", this->vkTouchBind, alloc);
+    doc.AddMember("vkInteractBind", this->vkInteractBind, alloc);
     doc.AddMember("vkUseBind", this->vkUseBind, alloc);
     doc.AddMember("vkSprintBind", this->vkSprintBind, alloc);
     doc.AddMember("vkForwardBind", this->vkForwardBind, alloc);
@@ -209,19 +211,21 @@ bool CConfig::Save()
     doc.AddMember("vkLeftBind", this->vkLeftBind, alloc);
     doc.AddMember("vkRightBind", this->vkRightBind, alloc);
 
+    doc.AddMember("iSyncMethod", this->iSyncMethod, alloc);
+
     doc.AddMember("iStartSmudgeTimerAt", this->iStartSmudgeTimerAt, alloc);
     doc.AddMember("iStartHuntTimerAt", this->iStartHuntTimerAt, alloc);
     doc.AddMember("iMaxMsSmudge", this->iMaxMsSmudge, alloc);
     doc.AddMember("iMaxMsHunt", this->iMaxMsHunt, alloc);
 
     doc.AddMember("flSize", this->flSize, alloc);
+    doc.AddMember("flSnappingDistance", this->flSnappingDistance, alloc);
     doc.AddMember("flSmudgeTimerSize", this->flSmudgeTimerSize, alloc);
     doc.AddMember("flObamboTimerSize", this->flObamboTimerSize, alloc);
     doc.AddMember("flHuntTimerSize", this->flHuntTimerSize, alloc);
     doc.AddMember("flCandleTimerSize", this->flCandleTimerSize, alloc);
     doc.AddMember("flRounding", this->flRounding, alloc);
     doc.AddMember("flInactiveAlpha", this->flInactiveAlpha, alloc);
-    doc.AddMember("flStaminaBarRounding", this->flStaminaBarRounding, alloc);
     doc.AddMember("flStaminaBarFillRounding", this->flStaminaBarFillRounding, alloc);
     doc.AddMember("flStaminaBarPadding", this->flStaminaBarPadding, alloc);
 
@@ -233,7 +237,6 @@ bool CConfig::Save()
             doc.AddMember(rapidjson::StringRef(name), arr, alloc);
         };
 
-    SaveImVec2("imvTimerWindowPos", this->imvTimerWindowPos);
     SaveImVec2("imvSmudgeTimerWindowPos", this->imvSmudgeTimerWindowPos);
     SaveImVec2("imvObamboTimerWindowPos", this->imvObamboTimerWindowPos);
     SaveImVec2("imvHuntTimerWindowPos", this->imvHuntTimerWindowPos);
@@ -253,7 +256,7 @@ bool CConfig::Save()
         };
 
     SaveImVec4("imvBackgroundColor", this->imvBackgroundColor);
-    SaveImVec4("imvBordersColor", this->imvBordersColor);
+    SaveImVec4("imvBorderColor", this->imvBorderColor);
     SaveImVec4("imvGlowColor1", this->imvGlowColor1);
     SaveImVec4("imvGlowColor2", this->imvGlowColor2);
 
@@ -275,8 +278,6 @@ bool CConfig::Save()
     SaveImVec4("imvCandleTimerColor1", this->imvCandleTimerColor1);
     SaveImVec4("imvCandleTimerColor2", this->imvCandleTimerColor2);
 
-    SaveImVec4("imvStaminaBackgroundColor", this->imvStaminaBackgroundColor);
-    SaveImVec4("imvStaminaBordersColor", this->imvStaminaBordersColor);
     SaveImVec4("imvStaminaColorTop", this->imvStaminaColorTop);
     SaveImVec4("imvStaminaColorBottom", this->imvStaminaColorBottom);
     SaveImVec4("imvStaminaColorExhaustedTop", this->imvStaminaColorExhaustedTop);
@@ -290,6 +291,8 @@ bool CConfig::Save()
     std::u8string strFontFileName = this->fontFileName.u8string();
     Value.SetString(reinterpret_cast<const char*>(strFontFileName.c_str()), static_cast<rapidjson::SizeType>(strFontFileName.length()), alloc);
     doc.AddMember("fontFileName", Value, alloc);
+
+	CSnapWindow::Get().SaveGroups(doc, alloc);
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -315,6 +318,22 @@ bool CConfig::Save()
     return true;
 }
 
+void CConfig::OnFrameStart()
+{
+    if (this->bNeedToSave)
+    {
+        this->bNeedToSave = false;
+        this->bNeedToLoad = false;
+        this->_Save();
+    }
+
+    if (this->bNeedToLoad)
+    {
+        this->bNeedToLoad = false;
+        this->_Load(false);
+	}
+}
+
 void CConfig::OnFrameEnd()
 {
     this->bConfigUpdated = false;
@@ -329,7 +348,7 @@ std::vector<const int*> CConfig::GetAllKeybinds() const
         &this->vkCandleTimerBind,
         &this->vkFullResetBind,
         &this->vkResetBind,
-        &this->vkTouchBind,
+        &this->vkInteractBind,
         &this->vkUseBind,
         &this->vkSprintBind,
         &this->vkForwardBind,

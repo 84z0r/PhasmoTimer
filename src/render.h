@@ -15,10 +15,12 @@ public:
 	bool Init(HINSTANCE hInstance);
 	void Cleanup();
 	void RenderLoop();
+	inline void Reset() { this->bForceResize = true; this->bWindowMovedOrResized = true; }
 
 	inline bool IsGameWindowActive() const { return this->bGameWindowActive; }
 	inline bool IsSelfWindowActive() const { return this->bSelfWindowActive; }
 	inline const std::chrono::steady_clock::time_point& GetNowTime() const { return this->now_time; }
+	inline HWND GetHWND() const { return this->hwnd; }
 	
 	ID3D11ShaderResourceView* logo_texture = nullptr;
 	bool bWantExit = false;
@@ -28,7 +30,7 @@ private:
 	void OnWindowMovedOrResized();
 	void OnDpiChanged();
 	bool CreateDeviceD3D(int width, int height);
-	bool CreateSwapChain(int width, int height);
+	bool CreateSwapChain(int width, int height, bool bWaitable);
 	void CleanupSwapChain();
 	void CleanupDeviceD3D();
 	void CleanupDComp();
@@ -51,6 +53,8 @@ private:
 	IDCompositionVisual* g_dcompVisual = nullptr;
 	HMONITOR g_CurrentMonitor = nullptr;
 	HWND hwnd = nullptr;
+
+	HANDLE g_hSwapChainWaitableObject = nullptr;
 	
 	std::chrono::steady_clock::time_point now_time{};
 

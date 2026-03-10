@@ -3,7 +3,6 @@
 #include "config.h"
 #include "render.h"
 #include "tools.h"
-#include "imgui_wrappers.h"
 
 constexpr const ImGuiWindowFlags stamina_window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
 
@@ -130,18 +129,8 @@ void CStamina::StaminaWindow()
     if (!CConfig::Get().bEnableStaminaBar)
 		return;
 
-	ImGui::SetNextWindowPos(CConfig::Get().imvStaminaBarPos, ImGuiCond_Once);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
-
-    if (ImGui::BeginSnap("Stamina Window", nullptr, stamina_window_flags))
+    if (CSnapWindow::Get().Begin("Stamina Window", CConfig::Get().imvStaminaBarPos, nullptr, stamina_window_flags))
     {
-        if (CConfig::Get().IsConfigUpdated())
-            ImGui::SetWindowPos(CConfig::Get().imvStaminaBarPos);
-        else
-            CConfig::Get().imvStaminaBarPos = ImGui::GetWindowPos();
-
         this->StaminaBar.bCriticalFlash = CConfig::Get().bStaminaFlashOnExhausted ? this->bExhausted : false;
         this->StaminaBar.bUseAltFill = this->bExhausted;
         this->StaminaBar.flValue = std::chrono::duration<double>(this->tStamina).count();
@@ -149,5 +138,4 @@ void CStamina::StaminaWindow()
     }
 
     ImGui::End();
-    ImGui::PopStyleVar(3);
 }

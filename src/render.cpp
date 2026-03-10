@@ -1,9 +1,11 @@
 #include <filesystem>
+#include "dwm.h"
 #include "render.h"
 #include "config.h"
 #include "foregroundtracker.h"
 #include "tools.h"
 #include "imgui_wrappers.h"
+#include "snap_window.h"
 #include "font_comicz.h"
 #include "logo.h"
 #include "../resource.h"
@@ -29,12 +31,18 @@ void CRender::RenderLoop()
 
 bool CRender::StartNewFrame()
 {
+    if (this->g_hSwapChainWaitableObject && !this->g_SwapChainOccluded && CConfig::Get().iSyncMethod != 2)
+        WaitForSingleObject(this->g_hSwapChainWaitableObject, INFINITE);
+
+    if (!CConfig::Get().iSyncMethod)
+        CDWMSync::Get().Sync();
+
     MSG msg;
     while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
     {
         ::TranslateMessage(&msg);
         ::DispatchMessage(&msg);
-        if (msg.message == WM_QUIT || msg.message == WM_CLOSE)
+        if (msg.message == WM_QUIT)
         {
             this->bWantExit = true;
             return false;
@@ -53,6 +61,7 @@ bool CRender::StartNewFrame()
         this->OnWindowMovedOrResized();
     }
 
+	CConfig::Get().OnFrameStart();
 	CFonts::Get().OnFrameStart();
 
     this->now_time = std::chrono::steady_clock::now();
@@ -63,18 +72,18 @@ bool CRender::StartNewFrame()
     CGui::Get().OnFrameStart();
 
     // Handle window being minimized or screen locked
-    if (g_SwapChainOccluded && g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED)
+    if (this->g_SwapChainOccluded && this->g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         return false;
     }
-    g_SwapChainOccluded = false;
+    this->g_SwapChainOccluded = false;
 
     // Start the Dear ImGui frame
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-    ImGui::BeginSnapFrame();
+    CSnapWindow::Get().OnFrameStart();
 
     return true;
 }
@@ -82,21 +91,26 @@ bool CRender::StartNewFrame()
 void CRender::EndNewFrame()
 {
     static const float clear_color_with_alpha[4] = { 0.f, 0.f, 0.f, 0.f };
-
-    this->UpdateClickThroughState();
+    
     CInput::Get().OnFrameEnd();
 	CFonts::Get().OnFrameEnd();
-    CConfig::Get().OnFrameEnd();
+    CConfig& config = CConfig::Get();
+    config.OnFrameEnd();
+    this->UpdateClickThroughState();
 
     ImGui::Render();
-    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-    g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+    this->g_pd3dDeviceContext->OMSetRenderTargets(1, &this->g_mainRenderTargetView, nullptr);
+    this->g_pd3dDeviceContext->ClearRenderTargetView(this->g_mainRenderTargetView, clear_color_with_alpha);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-    HRESULT hr = g_pSwapChain->Present(1, 0);   // Present with vsync
-    //HRESULT hr = g_pSwapChain->Present(0, 0); // Present without vsync
-    g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
-    g_dcompDevice->Commit();
+    HRESULT hr;
+    if (config.iSyncMethod == 1 || config.iSyncMethod == 2)
+        hr = this->g_pSwapChain->Present(1, 0);   // Present with vsync
+    else
+        hr = this->g_pSwapChain->Present(0, 0); // Present without vsync
+
+    this->g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
+    this->g_dcompDevice->Commit();
 }
 
 bool CRender::Init(HINSTANCE hInstance)
@@ -173,7 +187,11 @@ bool CRender::Init(HINSTANCE hInstance)
 		return false;
     }
 
-	CGui::Get().Init();
+	if (!CGui::Get().Init())
+    {
+        MessageBoxW(nullptr, L"Failed to initialize GUI!", L"Error", MB_OK | MB_ICONERROR);
+        return false;
+    }
 
     if (!this->LoadTextureFromMemory(Logo::LOGO_BIN, sizeof(Logo::LOGO_BIN), &this->logo_texture, &this->logo_width, &this->logo_height))
     {
@@ -183,6 +201,12 @@ bool CRender::Init(HINSTANCE hInstance)
 
     CGameForegroundTracker::Get().SetOwnHwnd(this->hwnd);
     CGameForegroundTracker::Get().SetProcessName(CConfig::Get().strGameProcessName);
+
+    if (!CDWMSync::Get().Init())
+    {
+        MessageBoxW(nullptr, L"Failed to create waiteble timer!", L"Error", MB_OK | MB_ICONERROR);
+        return false;
+    }
 
     return true;
 }
@@ -196,6 +220,7 @@ void CRender::Cleanup()
 
     this->CleanupDComp();
     this->CleanupDeviceD3D();
+	CDWMSync::Get().Cleanup();
 
     SHAppBarMessage(ABM_REMOVE, &this->abd);
 
@@ -206,13 +231,13 @@ void CRender::Cleanup()
 bool CRender::CreateDeviceD3D(int width, int height)
 {
     D3D_FEATURE_LEVEL featureLevel;
-    if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext)))
+    if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &this->g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext)))
         return false;
 
-    return CreateSwapChain(width, height);
+    return this->CreateSwapChain(width, height, CConfig::Get().iSyncMethod != 2);
 }
 
-bool CRender::CreateSwapChain(int width, int height)
+bool CRender::CreateSwapChain(int width, int height, bool bWaitable)
 {
     DXGI_SWAP_CHAIN_DESC1 sc_desc = {};
     sc_desc.Width = width;
@@ -223,28 +248,48 @@ bool CRender::CreateSwapChain(int width, int height)
     sc_desc.SampleDesc.Quality = 0;
     sc_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     sc_desc.BufferCount = 2;
-    sc_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    sc_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     sc_desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
     sc_desc.Scaling = DXGI_SCALING_STRETCH;
 
+    if (bWaitable)
+        sc_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+
     IDXGIFactory2* dxgiFactory = nullptr;
     IDXGIDevice* dxgiDevice = nullptr;
-    g_pd3dDevice->QueryInterface(IID_PPV_ARGS(&dxgiDevice));
     IDXGIAdapter* adapter = nullptr;
-    dxgiDevice->GetAdapter(&adapter);
-    adapter->GetParent(IID_PPV_ARGS(&dxgiFactory));
+    bool ret = false;
 
-    bool ret = true;
+    if (SUCCEEDED(this->g_pd3dDevice->QueryInterface(IID_PPV_ARGS(&dxgiDevice))))
+    {
+        dxgiDevice->GetAdapter(&adapter);
+        adapter->GetParent(IID_PPV_ARGS(&dxgiFactory));
 
-    if (FAILED(dxgiFactory->CreateSwapChainForComposition(g_pd3dDevice, &sc_desc, nullptr, (IDXGISwapChain1**)&g_pSwapChain)))
-        ret = false;
+        ret = true;
 
-    if (!CreateRenderTarget())
-        ret = false;
+        if (SUCCEEDED(dxgiFactory->CreateSwapChainForComposition(this->g_pd3dDevice, &sc_desc, nullptr, reinterpret_cast<IDXGISwapChain1**>(&this->g_pSwapChain))))
+        {
+            if (bWaitable)
+            {
+                IDXGISwapChain2* swapchain2 = nullptr;
+                if (SUCCEEDED(this->g_pSwapChain->QueryInterface(IID_PPV_ARGS(&swapchain2))))
+                {
+                    swapchain2->SetMaximumFrameLatency(1);
+                    this->g_hSwapChainWaitableObject = swapchain2->GetFrameLatencyWaitableObject();
+                    swapchain2->Release();
+                }
+				else ret = false;
+            }
 
-    dxgiDevice->Release();
-    adapter->Release();
-    dxgiFactory->Release();
+            if (!this->CreateRenderTarget())
+                ret = false;
+        }
+        else ret = false;
+
+        dxgiDevice->Release();
+        adapter->Release();
+        dxgiFactory->Release();
+    }
 
     return ret;
 }
@@ -278,7 +323,8 @@ void CRender::CleanupRenderTarget()
 void CRender::CleanupSwapChain()
 {
     this->CleanupRenderTarget();
-    if (this->g_pSwapChain) { this->g_pSwapChain->Release(); this->g_pSwapChain = nullptr; }
+    if (this->g_hSwapChainWaitableObject) { CloseHandle(this->g_hSwapChainWaitableObject); this->g_hSwapChainWaitableObject = nullptr; }
+    if (this->g_pSwapChain) { this->g_pSwapChain->Release(); this->g_pSwapChain = nullptr; }	
 }
 
 void CRender::CleanupDeviceD3D()
@@ -297,7 +343,7 @@ void CRender::CleanupDComp()
 
 void CRender::OnWindowMovedOrResized()
 {
-    HMONITOR hMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    HMONITOR hMonitor = MonitorFromWindow(this->hwnd, MONITOR_DEFAULTTONEAREST);
 
     if ((hMonitor == this->g_CurrentMonitor) && !this->bForceResize)
         return;
@@ -321,19 +367,19 @@ void CRender::OnWindowMovedOrResized()
 
     this->CleanupSwapChain();
 
-    SHAppBarMessage(ABM_REMOVE, &abd);
+    SHAppBarMessage(ABM_REMOVE, &this->abd);
 
     this->bInternalRecreate = true;
     DestroyWindow(this->hwnd);
     this->hwnd = CreateWindowExW(WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_NOREDIRECTIONBITMAP, this->wc.lpszClassName, L"PhasmoTimer", WS_POPUP, mi.rcMonitor.left, mi.rcMonitor.top, width, height, nullptr, nullptr, this->wc.hInstance, nullptr);
     this->bInternalRecreate = false;
 
-    abd.hWnd = this->hwnd;
-    SHAppBarMessage(ABM_NEW, &abd);
+    this->abd.hWnd = this->hwnd;
+    SHAppBarMessage(ABM_NEW, &this->abd);
 
     CGameForegroundTracker::Get().SetOwnHwnd(this->hwnd);
 
-    this->CreateSwapChain(width, height);
+    this->CreateSwapChain(width, height, CConfig::Get().iSyncMethod != 2);
 
     this->g_dcompDevice->CreateTargetForHwnd(this->hwnd, TRUE, &this->g_dcompTarget);
     this->g_dcompDevice->CreateVisual(&this->g_dcompVisual);
@@ -344,7 +390,7 @@ void CRender::OnWindowMovedOrResized()
     ::ShowWindow(this->hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(this->hwnd);
 
-    ImGui_ImplWin32_Init(hwnd);
+    ImGui_ImplWin32_Init(this->hwnd);
 }
 
 void CRender::OnDpiChanged()
@@ -443,17 +489,17 @@ void CRender::UpdateClickThroughState()
 
     const ImGuiIO& io = ImGui::GetIO();
 
-    LONG_PTR exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+    LONG_PTR exStyle = GetWindowLongPtr(this->hwnd, GWL_EXSTYLE);
 
     if (io.WantCaptureMouse)
     {
         if (exStyle & WS_EX_TRANSPARENT)
-            SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_TRANSPARENT);
+            SetWindowLongPtr(this->hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_TRANSPARENT);
     }
     else
     {
         if (!(exStyle & WS_EX_TRANSPARENT))
-            SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT);
+            SetWindowLongPtr(this->hwnd, GWL_EXSTYLE, exStyle | WS_EX_TRANSPARENT);
     }
 }
 

@@ -13,7 +13,7 @@ void CHUDBar::Draw() const
     const ImGuiID id = window->GetID(this->strLabel.c_str());
 
     ImVec2 pos = window->DC.CursorPos;
-    ImRect bb(pos, ImVec2(pos.x + this->Size.x, pos.y + this->Size.y));
+    ImRect bb(pos, ImVec2(pos.x + std::truncf(this->Size.x), pos.y + std::truncf(this->Size.y)));
     ImGui::ItemSize(bb, g.Style.FramePadding.y);
     if (!ImGui::ItemAdd(bb, id))
         return;
@@ -21,14 +21,20 @@ void CHUDBar::Draw() const
     double fraction = CTools::Get().Saturate(this->flValue / this->flMaxValue);
     ImDrawList* draw_list = window->DrawList;
 
-    ImVec4 bg = this->BgColor;
-    bg.w *= global_alpha;
-    draw_list->AddRectFilled(bb.Min, bb.Max, ImGui::ColorConvertFloat4ToU32(bg), this->Rounding);
+    ImVec2 fill_min = ImVec2(bb.Min.x + this->Padding, bb.Min.y + this->Padding);
+    ImVec2 fill_max_full = ImVec2(bb.Max.x - this->Padding, bb.Max.y - this->Padding);
+
+    if (this->bCriticalFlash)
+    {
+        ImVec4 borderColor(0.f, 0.f, 0.f, 0.f);
+        float pulse = static_cast<float>(sin(ImGui::GetTime() * this->FlashSpeed)) * 0.5f + 0.5f;
+        borderColor = CTools::Get().Lerp(borderColor, this->FlashColor, pulse);
+        borderColor.w *= global_alpha;
+        draw_list->AddRect(fill_min, fill_max_full, ImGui::ColorConvertFloat4ToU32(borderColor), this->FillRounding, 0, pulse);
+    }
 
     if (fraction > 0.0)
     {
-        ImVec2 fill_min = ImVec2(bb.Min.x + this->Padding, bb.Min.y + this->Padding);
-        ImVec2 fill_max_full = ImVec2(bb.Max.x - this->Padding, bb.Max.y - this->Padding);
         float current_width = static_cast<float>(static_cast<double>(fill_max_full.x - fill_min.x) * fraction);
         ImVec2 fill_max = ImVec2(fill_min.x + current_width, fill_max_full.y);
 
@@ -50,19 +56,6 @@ void CHUDBar::Draw() const
             ApplyVertexGradient(draw_list, gloss_vtx_start, ImVec4(1, 1, 1, 0.25f), ImVec4(1, 1, 1, 0.0f));
         }
     }
-
-    ImVec4 borderColor = this->BorderColor;
-    float borderThickness = 1.0f;
-
-    if (this->bCriticalFlash)
-    {
-        float pulse = (float)sin(ImGui::GetTime() * this->FlashSpeed) * 0.5f + 0.5f;
-        borderColor = CTools::Get().Lerp(borderColor, this->FlashColor, pulse);
-        borderThickness = 1.0f + pulse * 1.0f;
-    }
-
-    borderColor.w *= global_alpha;
-    draw_list->AddRect(bb.Min, bb.Max, ImGui::ColorConvertFloat4ToU32(borderColor), this->Rounding, 0, borderThickness);
 
     if (this->ShowText)
     {
