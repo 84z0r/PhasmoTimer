@@ -49,6 +49,8 @@ bool CRender::StartNewFrame()
         }
     }
 
+    CConfig::Get().OnFrameStart();
+
     if (this->bDpiChanged)
     {
         this->bDpiChanged = false;
@@ -61,7 +63,6 @@ bool CRender::StartNewFrame()
         this->OnWindowMovedOrResized();
     }
 
-	CConfig::Get().OnFrameStart();
 	CFonts::Get().OnFrameStart();
 
     this->now_time = std::chrono::steady_clock::now();

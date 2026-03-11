@@ -91,8 +91,15 @@ bool CConfig::_Load(bool bFirstLoad)
     if (doc.HasMember("vkLeftBind") && doc["vkLeftBind"].IsInt()) this->vkLeftBind = doc["vkLeftBind"].GetInt();
     if (doc.HasMember("vkRightBind") && doc["vkRightBind"].IsInt()) this->vkRightBind = doc["vkRightBind"].GetInt();
 
-    if (doc.HasMember("iSyncMethod") && doc["iSyncMethod"].IsInt()) this->iSyncMethod = std::clamp(doc["iSyncMethod"].GetInt(), 0, 2);
+    if (doc.HasMember("iSyncMethod") && doc["iSyncMethod"].IsInt())
+    {
+        int newSyncVal = std::clamp(doc["iSyncMethod"].GetInt(), 0, 3);
+        if (!bFirstLoad && newSyncVal != this->iSyncMethod)
+            CRender::Get().Reset();
 
+        this->iSyncMethod = newSyncVal;
+    }
+        
     if (doc.HasMember("iStartSmudgeTimerAt") && doc["iStartSmudgeTimerAt"].IsInt64()) this->iStartSmudgeTimerAt = doc["iStartSmudgeTimerAt"].GetInt64();
     if (doc.HasMember("iStartHuntTimerAt") && doc["iStartHuntTimerAt"].IsInt64()) this->iStartHuntTimerAt = doc["iStartHuntTimerAt"].GetInt64();
     if (doc.HasMember("iMaxMsSmudge") && doc["iMaxMsSmudge"].IsInt64()) this->iMaxMsSmudge = doc["iMaxMsSmudge"].GetInt64();
@@ -190,6 +197,7 @@ bool CConfig::_Save()
     doc.AddMember("bEnableObamboTimer", this->bEnableObamboTimer, alloc);
     doc.AddMember("bEnableHuntTimer", this->bEnableHuntTimer, alloc);
     doc.AddMember("bEnableCandleTimer", this->bEnableCandleTimer, alloc);
+    doc.AddMember("bEnableBorders", this->bEnableBorders, alloc);
     doc.AddMember("bScanSystemFonts", this->bScanSystemFonts, alloc);
     doc.AddMember("bScanUserFonts", this->bScanUserFonts, alloc);
     doc.AddMember("bScanAppFonts", this->bScanAppFonts, alloc);
