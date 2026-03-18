@@ -1,5 +1,5 @@
 # PhasmoTimer is a lightweight but powerful timer overlay for Phasmophobia.
-<img width="389" height="203" alt="timer_git" src="https://github.com/user-attachments/assets/a33d463b-b17c-4f86-b1b8-6f04caa6d9fb" />
+<a href="https://www.youtube.com/watch?v=WuUrY0sYO6U">   <img width="389" height="203" alt="timer_git" src="https://github.com/user-attachments/assets/a33d463b-b17c-4f86-b1b8-6f04caa6d9fb" /> </a> 
 
 - Doesn't read the game memory
 - Works as an external overlay
@@ -12,3 +12,4 @@
 - Hunt timer
 - Candle timer
 - Stamina bar
+- [Video Guide Link](https://www.youtube.com/watch?v=WuUrY0sYO6U)
