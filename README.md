@@ -13,3 +13,4 @@
 - Candle timer
 - Stamina bar
 - [Video Guide Link](https://www.youtube.com/watch?v=WuUrY0sYO6U)
+- [FAQ](https://github.com/84z0r/PhasmoTimer/wiki/FAQ)
